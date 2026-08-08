@@ -391,7 +391,7 @@ firebase.initializeApp(firebaseConfig);
         </div>
         <div id="energyBar"><div id="energyFill"></div></div>
 
-        <img id="coin" src="ghane.jpg" alt="Coin">
+        <img id="coin" src="img1.jpg" alt="Coin">
 
         <div class="buyModeArea">
             <span>حالت خرید:</span>
@@ -443,7 +443,7 @@ firebase.initializeApp(firebaseConfig);
     <div id="heroesPage" class="pageContent">
         <div class="scrollArea">
             <div class="panel">
-                <h3>🦸 قهرمان‌های من (<span id="ownedHeroCount">0</span> / 9)</h3>
+                <h3>🦸 قهرمان‌های من (<span id="ownedHeroCount">0</span> / 7)</h3>
             </div>
             <div id="heroList"></div>
         </div>
@@ -1061,64 +1061,76 @@ setInterval(() => {
 /* ==================================================
    آمار و رتبه
 ================================================== */
+function updateStats(){
+    document.getElementById("clickCount").innerText = totalClicks;
+    document.getElementById("coinCount").innerText = totalCoinsEarned.toLocaleString();
+    document.getElementById("goldenClickCount").innerText = totalGoldenClicks;
+    updateRank();
+}
+
 function updateRank(){
 
-    // رتبه فقط بر اساس سکه فعلی بازیکن
-    const currentCoins = Number(coins) || 0;
+    const earned = Number(totalCoinsEarned) || 0;
 
     const ranks = [
         { min: 0,      max: 50,      name: "حروم لقمه" },
         { min: 50,     max: 1000,    name: "نیگا" },
         { min: 1000,   max: 15000,   name: "mr.26 kir" },
         { min: 15000,  max: 30000,   name: "سکه باز جنده" },
-        { min: 30000,  max: 50000,   name: "خسته شو حاجی" },
-        { min: 50000,  max: 100000, name: "خوار مادر سکه بازی" },
-        { min: 100000, max: 200000, name: "حضرت سکه های نیگا" },
+        { min: 30000,  max: 50000,  name: "خسته شو حاجی" },
+        { min: 50000, max: 100000,  name: "خوار مادر سکه بازی" },
+        { min: 100000, max: 200000,  name: "حضرت سکه های نیگا" },
         { min: 200000, max: Infinity, name: "ابر کون گشاد کلیکر" }
     ];
 
     let currentRank = ranks[0];
 
-    // پیدا کردن رتبه بر اساس سکه فعلی
+    // پیدا کردن رتبه فعلی
     for(let i = 0; i < ranks.length; i++){
-        if(currentCoins >= ranks[i].min){
+
+        if(earned >= ranks[i].min){
             currentRank = ranks[i];
         }
+
     }
 
     let percent = 100;
 
-    // محاسبه پیشرفت تا رتبه بعدی
+    // اگر هنوز رتبه آخر نیست
     if(currentRank.max !== Infinity){
 
         const needed = currentRank.max - currentRank.min;
-        const progress = currentCoins - currentRank.min;
+        const progress = earned - currentRank.min;
 
         percent = (progress / needed) * 100;
 
-        // محدود کردن درصد بین 0 تا 100
+        // جلوگیری از کمتر از صفر یا بیشتر از 100
         percent = Math.max(0, Math.min(100, percent));
     }
 
-    // نمایش رتبه
+    // نمایش نام رتبه
     const rankText = document.getElementById("rankText");
 
     if(rankText){
         rankText.innerText = currentRank.name;
     }
 
-    // حرکت نوار پیشرفت
+    // حرکت نوار
     const progressFill = document.getElementById("progressFill");
 
     if(progressFill){
+
         progressFill.style.width = percent + "%";
+
     }
 
     // نمایش درصد
     const progressText = document.getElementById("progressText");
 
     if(progressText){
+
         progressText.innerText = Math.floor(percent) + "%";
+
     }
 }
 
@@ -1400,6 +1412,12 @@ function loadGame(){
         lastWarTicketTime = d.lastWarTicketTime || Date.now();
         maxTicketPrice = d.maxTicketPrice || 25000; ticketSpeedPrice = d.ticketSpeedPrice || 40000;
     }
+}
+if(maxWarTickets === 10){
+    let maxWarTickets = 5;
+}
+if(warTickets >= 5){
+    let warTickets = 5;
 }
 
 document.getElementById("saveBtn").onclick = () => { saveGame(); alert("بازی ذخیره شد."); };
