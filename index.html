@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>انگشتش کن!</title>
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:tahoma, sans-serif;
+    font-weight: bold;
+}
+
+body{
+    background: radial-gradient(circle at top,#203050 0%,#141414 35%,#090909 100%);
+    color:white;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    padding:10px;
+}
+
+#game{
+    width:410px;
+    max-width:100%;
+    background:rgba(25,25,25,.85);
+    backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:28px;
+    padding:18px;
+    text-align:center;
+    box-shadow: 0 0 30px rgba(0,180,255,.25), 0 0 70px rgba(255,180,0,.08);
+    position: relative;
+    overflow: hidden;
+}
+
+#toastError {
+    position: absolute;
+    top: -60px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(45deg, #ff1744, #d50000);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 900;
+    box-shadow: 0 4px 15px rgba(255, 23, 68, 0.5);
+    transition: top 0.3s ease-in-out;
+    z-index: 10000;
+    width: 85%;
+    text-align: center;
+    border: 1px solid #ff8a80;
+}
+#toastError.show {
+    top: 15px;
+}
+
+#topMenu{
+    display:flex;
+    gap:4px;
+    margin-bottom:15px;
+}
+
+.menuTab{
+    flex:1;
+    padding:10px 2px;
+    border:none;
+    border-radius:10px;
+    background:#333;
+    color:white;
+    font-size:11px;
+    font-weight:900;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.menuTab.active{
+    background:#ff9800;
+    color:black;
+    box-shadow:0 0 10px rgba(255,152,0,.5);
+}
+
+.pageContent{ display:none; }
+.pageContent.active{ display:block; }
+
+h1{
+    font-size:22px;
+    margin-bottom:10px;
+    color:#19ffe0;
+    text-shadow: 0 0 8px #5900ff, 0 0 18px #006eff;
+    font-weight:900;
+}
+
+.info{
+    display:flex;
+    justify-content:space-around;
+    margin-bottom:8px;
+    font-size:15px;
+    font-weight:800;
+}
+
+#coin{
+    width:180px;
+    height:180px;
+    border-radius:50%;
+    cursor:pointer;
+    transition:.15s;
+    user-select:none;
+    object-fit:cover;
+    display:block;
+    margin:15px auto;
+    border:6px solid #FFD700;
+    box-shadow: 0 0 15px #FFD700, 0 0 35px rgba(255,215,0,.8);
+}
+
+#coin:active{ transform:scale(.92) rotate(8deg); }
+
+.flying-coin {  
+    position: absolute;  
+    pointer-events: none;  
+    font-size: 20px;  
+    font-weight: 900;  
+    color: #ffd700;  
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);  
+    z-index: 9999;  
+    animation: floatUp 0.8s ease-out forwards;  
+    user-select: none;  
+}  
+
+.flying-coin.golden {  
+    font-size: 26px;  
+    color: #fff700;  
+    text-shadow: 0 0 15px #ffaa00, 0 0 25px #ffea00;  
+    font-weight: 900;  
+}  
+
+@keyframes floatUp {  
+    0% { opacity: 1; transform: translate(-50%, -50%) scale(0.8); }  
+    50% { transform: translate(calc(-50% + var(--dx)), calc(-50% - 50px)) scale(1.2); }  
+    100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% - 100px)) scale(1); }  
+}
+
+#energyBar{
+    width:100%;
+    height:14px;
+    background:#444;
+    border-radius:20px;
+    overflow:hidden;
+    margin:10px 0;
+}
+
+#energyFill{
+    width:100%;
+    height:100%;
+    background:lime;
+    transition:.2s;
+}
+
+button.actionBtn{
+    width:100%;
+    padding:15px;
+    margin-top:8px;
+    border:none;
+    border-radius:12px;
+    cursor:pointer;
+    font-size:15px;
+    font-weight:800;
+    color:white;
+    background:linear-gradient(180deg,#1268af,#2881e0);
+    box-shadow: 0 4px 0 #0059b8;
+    transition:.15s;
+}
+
+button.actionBtn:hover{ transform:translateY(-2px); }
+button.actionBtn:active{ transform:translateY(2px); box-shadow: 0 1px 0 #0059b8; }
+button.actionBtn:disabled{ background:#555; box-shadow:none; cursor:not-allowed; }
+
+.panel{
+    margin-top:12px;
+    padding:12px;
+    background:rgba(35,35,35,.85);
+    border-radius:14px;
+    border:1px solid rgba(0,170,255,.2);
+    font-size:15px;
+    text-align:center;
+    font-weight:bold;
+}
+
+.panel h3{ color:#4ff9ff; margin-bottom:8px; font-size:20px; font-weight:900; }
+
+.scrollArea{
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+.scrollArea::-webkit-scrollbar { width: 4px; }
+.scrollArea::-webkit-scrollbar-thumb { background: #ff9800; border-radius: 4px; }
+
+.buyModeArea{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+    margin-top:8px;
+    font-size:12px;
+}
+.buyModeBtn{
+    background:#444; border:none; color:white; padding:4px 10px; border-radius:6px; cursor:pointer; font-weight:bold;
+}
+.buyModeBtn.active{ background:#007bff; font-weight:900; }
+
+.monsterCard, .nftCard {
+    background: rgba(20, 20, 20, 0.9);
+    border-radius: 14px;
+    padding: 12px;
+    margin-bottom: 12px;
+    border: 2px solid #555;
+    text-align: center;
+}
+.nftImg {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin: 6px auto;
+    display: block;
+    border: 2px solid rgba(255,255,255,0.2);
+}
+
+.lvl-1 { border-color: #888888; box-shadow: 0 0 8px rgba(136,136,136,0.3); }
+.lvl-2 { border-color: #4caf50; box-shadow: 0 0 8px rgba(76,175,80,0.3); }
+.lvl-3 { border-color: #2196f3; box-shadow: 0 0 8px rgba(33,150,243,0.3); }
+.lvl-4 { border-color: #9c27b0; box-shadow: 0 0 8px rgba(156,39,176,0.3); }
+.lvl-5 { border-color: #ffeb3b; box-shadow: 0 0 8px rgba(255,235,59,0.3); }
+.lvl-6 { border-color: #f436dbab; box-shadow: 0 0 10px rgba(244,67,54,0.5); }
+.lvl-7 { 
+    border-color: #00ffff; 
+    box-shadow: 0 0 15px #00ffff, inset 0 0 15px #ff00ff; 
+    animation: neonGlow 1.5s infinite alternate;
+}
+.lvl-8 { 
+    border-color: #00ff88; 
+    box-shadow: 0 0 15px #00ffff, inset 0 0 15px #ff00ff; 
+    animation: lvl-8Glow 1.5s infinite alternate;
+}
+.lvl-9 { 
+    border-color: #ff1100; 
+    box-shadow: 0 0 15px #00ffff, inset 0 0 15px #ff00ff; 
+    animation: lvl-9Glow 1.5s infinite alternate;
+}
+
+@keyframes neonGlow {
+    from { box-shadow: 0 0 10px #00ffff, inset 0 0 10px #ff00ff; }
+    to { box-shadow: 0 0 20px #ff00ff, inset 0 0 20px #00ffff; }
+}
+
+@keyframes lvl-8Glow {
+    from { box-shadow: 0 0 10px #00ffc8, inset 0 0 10px #00ff88; }
+    to { box-shadow: 0 0 20px #00ffea, inset 0 0 20px #00ff9d; }
+}
+
+@keyframes lvl-9Glow {
+    from { box-shadow: 0 0 10px #00ffff, inset 0 0 10px #ff00ff; }
+    to { box-shadow: 0 0 20px #ff00ff, inset 0 0 20px #00ffff; }
+}
+
+#openCasinoBtn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #ff0055, #ff9800);
+    font-size: 26px;
+    border: 2px solid white;
+    box-shadow: 0 0 15px rgba(255, 152, 0, 0.8);
+    z-index: 900;
+    cursor: pointer;
+}
+
+#casinoModal {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 9999;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(5px);
+}
+
+.casinoBoxModal {
+    background: linear-gradient(135deg, #2b0000, #4a0e0e);
+    border: 2px solid #ff4444;
+    border-radius: 20px;
+    padding: 20px;
+    width: 320px;
+    position: relative;
+    text-align: center;
+}
+
+#closeCasinoBtn {
+    position: absolute; top: 10px; right: 15px;
+    background: transparent; border: none; font-size: 18px; color: white; cursor: pointer;
+}
+
+.casino-display { font-size: 32px; background: #111; padding: 8px; border-radius: 10px; margin: 10px 0; border: 1px dashed #ff9800; }
+.casino-input { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #555; background: #111; color: #fff; text-align: center; margin-bottom: 8px; font-weight:bold; }
+
+#progressBar{ height:10px; background:#555; border-radius:10px; overflow:hidden; margin-top:4px; }
+#progressFill{ height:100%; width:0%; background:#4caf50; transition:.3s; }
+
+/* ================= بازار آنلاین ================= */
+.marketTop{display:flex;gap:6px;margin-bottom:10px}
+.marketTop input{flex:1;min-width:0;padding:10px;border-radius:10px;border:1px solid #00eaff;background:#111;color:#fff;text-align:center;font-weight:900;outline:none;box-shadow:0 0 8px rgba(0,234,255,.2)}
+.marketStatus{font-size:11px;color:#aaa;margin:6px 0 10px}
+.marketCard{background:rgba(10,15,25,.95);border:1px solid rgba(0,234,255,.35);border-radius:14px;padding:12px;margin-bottom:10px;box-shadow:0 0 10px rgba(0,234,255,.08)}
+.marketCard .seller{color:#ffb300;font-size:11px;margin-bottom:5px}
+.marketCard .marketPrice{color:#ffd700;font-size:14px;margin:7px 0}
+.marketEmpty{color:#888;padding:20px 8px;font-size:12px}
+.marketBtn{background:linear-gradient(180deg,#00a8ff,#0066ff)!important}
+.marketMine{background:linear-gradient(180deg,#ff9800,#e65100)!important}
+
+</style>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBlrb9xE--CvlqCINxJIy75u6n3f6_eaH4",
+  authDomain: "clicker-5eaed.firebaseapp.com",
+  databaseURL: "https://clicker-5eaed-default-rtdb.firebaseio.com",
+  projectId: "clicker-5eaed",
+  storageBucket: "clicker-5eaed.firebasestorage.app",
+  messagingSenderId: "461109787796",
+  appId: "1:461109787796:web:6ec86e263712911b4a8881"
+};
+
+firebase.initializeApp(firebaseConfig);
+</script>
+
+</head>
+
+<body>
+
+<button id="openCasinoBtn">🎰</button>
+
+<div id="casinoModal">
+    <div class="casinoBoxModal">
+        <button id="closeCasinoBtn">❌</button>
+        <h3 style="color:#ffb300">🎰 کازینو و ریسک</h3>  
+        <div class="casino-display" id="casinoSlots">🎰 🎰 🎰</div>  
+        <input type="number" id="betAmount" class="casino-input" placeholder="مبلغ شرط (۱,۰۰۰ تا ۱,۰۰۰,۰۰۰)">  
+        <button id="spinCasinoBtn" class="actionBtn" style="background: linear-gradient(45deg, #e65100, #ff9800);">🎲 چرخش گردونه!</button>  
+        <div id="casinoResult" style="font-size:12px; margin-top:10px; color:#ffd700; font-weight:bold; min-height:18px;"></div>  
+    </div>
+</div>
+
+<div id="game">
+
+    <div id="toastError">⚠️ سکه کافی نداری!</div>
+<!--=============منوی بالای صفحه==============-->
+    <div id="topMenu">
+        <button class="menuTab active" onclick="switchPage('mainPage')">🏠 خانه</button>
+        <button class="menuTab" onclick="switchPage('heroesPage')">🦸 قهرمان</button>
+        <button class="menuTab" onclick="switchPage('huntPage')">⚔️ شکارگاه</button>
+        <button class="menuTab" onclick="switchPage('collectionPage')">🎨 کلکسیون</button>
+        <button class="menuTab" onclick="switchPage('marketPage')">🏪 بازار</button>
+    </div>
+
+    <!-- ================= صفحه اصلی ================= -->
+    <div id="mainPage" class="pageContent active">
+        <h1>انگشتش کن!</h1>
+        <div class="info">
+            <div>🪙 <span id="coins">0</span></div>
+        </div>
+        <div class="info">
+            <div>⭐سطح: <span id="stage">1</span></div>
+        </div>
+        <div class="info">
+            <div>⚡ <span id="energyText">100</span> / <span id="maxEnergyText">100</span></div>
+            <div>💥قدرت: <span id="power">1</span></div>
+        </div>
+        <div id="energyBar"><div id="energyFill"></div></div>
+
+        <img id="coin" src="img1.jpg" alt="Coin">
+
+        <div class="buyModeArea">
+            <span>حالت خرید:</span>
+            <button class="buyModeBtn active" id="buy1">×1</button>
+            <button class="buyModeBtn" id="buy5">×5</button>
+            <button class="buyModeBtn" id="buy10">×10</button>
+        </div>
+
+        <div class="panel">
+            <h3>ارتقاها ✅</h3>
+            <button id="upgradePower" class="actionBtn">⬆ افزایش سکه کلیک (<span id="powerPrice">20</span> سکه)</button>
+            <button id="upgradeEnergy" class="actionBtn">🔋 ظرفیت انرژی (<span id="energyPrice">40</span> سکه)</button>
+            <button id="upgradeRegen" class="actionBtn">⚡ سرعت بازیابی انرژی (<span id="regenPrice">60</span> سکه)</button>
+        </div>
+
+        <div class="panel">
+            <h3>ارتقای کلیک طلایی ✨</h3>
+            <button id="upgradeGoldenChance" class="actionBtn">🎯 شانس کلیک طلایی (<span id="goldenChancePrice">150</span> سکه)</button>
+            <button id="upgradeGoldenMulti" class="actionBtn">🌟 ضریب سکه طلایی (<span id="goldenMultiPrice">300</span> سکه)</button>
+        </div>
+
+        <div class="panel">
+            <h3>رتبه بازیکن 👑</h3>
+            <div>رتبه: <strong id="rankText" style="color:#ffb300">حروم لقمه</strong></div>
+            <div id="progressBar"><div id="progressFill"></div></div>
+            <div style="font-size:17px; margin-top:2px;"><span id="progressText">0%</span></div>
+        </div>
+
+        <div class="panel">
+            <h3>📊 آمار و افتخارات</h3>
+            <div style="font-size: 16px;">🖱️ کلیک‌ها: <span id="clickCount">0</span></div>
+            <div style="font-size: 16px;">🪙 مجموع درآمد: <span id="coinCount">0</span></div>
+            <div style="font-size: 16px;">✨ کلیک‌های طلایی: <span id="goldenClickCount">0</span></div>
+            <button id="dailyReward" class="actionBtn" style="background:#28a745; margin-top:8px;">🎁 دریافت پاداش روزانه (100 سکه)</button>
+        </div>
+
+        <div class="panel">
+            <h3>💾 فایل ذخیره</h3>
+            <button id="saveBtn" class="actionBtn" style="background:#17a2b8;">💾 ذخیره بازی</button>
+            <button id="exportBtn" class="actionBtn" style="background:#6c757d;">📤 خروجی فایل</button>
+            <button id="importBtn" class="actionBtn" style="background:#6c757d;">📥 وارد کردن فایل</button>
+            <button id="resetBtn" class="actionBtn" style="background:#dc3545;">🔄 ریست کامل</button>
+        </div>
+
+        <div style="font-family: Verdana, Geneva, Tahoma, sans-serif; font-size:11px; opacity:0.6; margin-top:15px;">یکی از کنده کاریای بشا (به همراه MOEIN)</div>
+    </div>
+
+    <!-- ================= منوی قهرمان‌ها ================= -->
+    <div id="heroesPage" class="pageContent">
+        <div class="scrollArea">
+            <div class="panel">
+                <h3>🦸 قهرمان‌های من (<span id="ownedHeroCount">0</span> / 7)</h3>
+            </div>
+            <div id="heroList"></div>
+        </div>
+    </div>
+
+    <!-- ================= منوی شکارگاه ================= -->
+    <div id="huntPage" class="pageContent">
+        <div class="scrollArea">
+            <div class="panel">
+                <h3>🐲 پاپت‌های جنگی</h3>
+                <div style="font-size:20px; margin:6px 0;">🐲 <span id="warTicketText">5</span> / <span id="maxWarTicketText">5</span></div>
+                <div style="font-size:11px; color:#aaa; margin-bottom:6px;">زمان شارژ: <span id="libRegenTimeText">10</span> دقیقه</div>
+                <button id="buyWarTicket" class="actionBtn" style="margin-bottom:5px;">🐲 خرید ۱ پاپت (<span id="warTicketPriceText">50000</span> سکه)</button>
+                <button id="upgradeMaxTickets" class="actionBtn" style="background:#17a2b8; margin-bottom:5px;">🏺 افزایش سقف پاپت (<span id="maxTicketPrice">25000</span> سکه)</button>
+                <button id="upgradeTicketSpeed" class="actionBtn" style="background:#6c757d;">📖 شارز سریع تر پاپت(<span id="ticketSpeedPrice">100000</span> سکه)</button>
+            </div>
+
+            <div class="panel">
+                <h3 style="font-size:15px;">مناطقی که شکار ممنوعه(ولی ما میریم شکار!)</h3>
+                <p style="font-size:13px; color:#aaa; margin-bottom:8px;">سطوح 1 تا 5 برای شکار اماده اند!(الباقی در اپدیت بعد)</p>
+                <p style="font-size:13px; color:#aaa; margin-bottom:8px;">برا شکار باید حداقل 1 قهرمان تو دست و بالت باشه</p>
+            </div>
+            <div id="monsterList"></div>
+        </div>
+    </div>
+
+    <!-- ================= منوی کلکسیون کارت‌ها (NFT) ================= -->
+    <div id="collectionPage" class="pageContent">
+        <div class="scrollArea">
+            <div class="panel">
+                <h3>🎨 کلکسیون کارت من (<span id="nftCount">0</span>)</h3>
+                <p style="font-size:13px; color:#aaa;">کارت‌های شکار شده شما اینجا ذخیره می‌شوند. می‌توانید آن‌ها را در بازار آنلاین برای فروش بگذارید.</p>
+            </div>
+            <div id="collectionList"></div>
+        </div>
+    </div>
+
+
+    <div id="marketPage" class="pageContent">
+        <div class="scrollArea">
+            <div class="panel">
+                <h3>🏪 بازار آنلاین</h3>
+                <div class="marketTop">
+                    <input id="playerNameInput" maxlength="20" placeholder="نام بازیکن">
+                    <button id="savePlayerNameBtn" class="actionBtn" style="width:115px;margin-top:0;background:linear-gradient(180deg,#8e24aa,#5e35b1);">💾 ثبت نام</button>
+                </div>
+                <div id="marketStatus" class="marketStatus">در حال اتصال به بازار...</div>
+            </div>
+            <div class="panel">
+                <h3>🛒 کارت‌های گذاشته شده در بازار</h3>
+                <div id="marketList"><div class="marketEmpty">در حال دریافت کارت‌ها...</div></div>
+            </div>
+            <div class="panel">
+                <h3>🏷️ کارت‌های من در بازار</h3>
+                <div id="myMarketList"><div class="marketEmpty">هنوز کارتی برای فروش نگذاشته‌ای.</div></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+/* ==================================================
+   متغیرها و وضعیت بازی
+================================================== */
+let coins = 0, stage = 1, power = 1, energy = 100, maxEnergy = 100, regen = 1;
+let powerPrice = 30, energyPrice = 100, regenPrice = 80;
+
+let goldenChance = 2; 
+let goldenMultiplier = 5; 
+let goldenChancePrice = 300;
+let goldenMultiPrice = 300;
+let totalGoldenClicks = 0;
+
+let buyAmount = 1;
+let totalClicks = 0, totalCoinsEarned = 0;
+let ownedHeroes = [];
+let myNFTs = [];
+
+// ================= بازار آنلاین =================
+
+let firebaseReady = false, marketRef = null, playerRef = null, playerId = null;
+let playerName = "بازیکن ناشناس", marketItemsCache = {};
+
+
+let warTickets = 5;
+let maxWarTickets = 5;
+let warTicketInterval = 10 * 60 * 1000;
+const warTicketPrice = 50000;
+let lastWarTicketTime = Date.now();
+
+let maxTicketPrice = 25000;
+let ticketSpeedPrice = 100000;
+
+const heroes = [
+    { id: 1, name: "ضیا نظام گیسو کمندیان", power: 50, price: 1500 },
+    { id: 2, name: "مینی صفار جنگی زاده", power: 180, price: 8000 },
+    { id: 3, name: "لوله باز کن منزل بانو اشلی", power: 320, price: 25000 },
+    { id: 4, name: "ابر نظام جهادگر", power: 500, price: 60000 },
+    { id: 5, name: "ممد قلی جان بر کف", power: 680, price: 120000 },
+    { id: 6, name: "گودرت الله غفاریان", power: 850, price: 200000 },
+    { id: 7, name: "فرشته ای از بنگلادش", power: 1000, price: 350000 },
+    { id: 8, name: "حجت الاسلام سوییتی ابن کیریستیانو اوس غلام", power: 1126, price: 420000 },
+    { id: 9, name: "بنای کاخ شاه سرزمین نیگریان", power: 1469, price: 500000 },
+    { id: 10, name: "ارتشبد سردار دوشنبه عابدی زاده کابلی", power: 2185, price: 559000 }
+];
+
+/* ====== کارت ها ======== */
+
+const nftDatabase = {
+    "grey": [
+        { name: "دِ بَد پزشکیان", price: 1200, colorClass: "lvl-1", typeName: "پدرامی", img: "pzshkian.jpg" },
+        { name: "اشپزطبرقی", price: 1800, colorClass: "lvl-1", typeName: "غیاثی", img: "cestab.jpg" },
+        { name: "سرداری پروازی زاده", price: 2500, colorClass: "lvl-1", typeName: "کاملی", img: "sardariparvaz.jpg" },
+        { name: "می خانه انگلیسی ها", price: 25000, colorClass: "lvl-1", typeName: "قانعی", img: "ghanemey.jpg" }
+    ],
+    "green": [
+        { name: "گی دونی", price: 5000, colorClass: "lvl-2", typeName: "بشایی", img: "gaydoni.png" },
+        { name: "ارتشبد حاج نظام", price: 7500, colorClass: "lvl-2", typeName: "معینی (بی پور)", img: "nezamarteshi.jpg" },
+        { name: "صفار طِلایی", price: 10000, colorClass: "lvl-2", typeName: "طیاره ای", img: "gsfr.png" },
+        { name: "قانع اِیر لاین", price: 60000, colorClass: "lvl-2", typeName: "پدرام صفاری", img: "ghaneair.jpg" }
+    ],
+    "blue": [
+        { name: "هَل هُوَ جُندی؟", price: 18000, colorClass: "lvl-3", typeName: "نظام الحسینی", img: "etiadpzshkian.png" },
+        { name: "موزه داری نوین", price: 35000, colorClass: "lvl-3", typeName: "شیخ نَیاءیی", img: "dehghanmozeh.jpg" },
+        { name: "مخترع مناطق کتک خورده", price: 45000, colorClass: "lvl-3", typeName: "پدرامی", img: "basiratianbargh.jpg" }
+    ],
+    "purple": [
+        { name: "مرغ همسایه غازه(خب نمیشه اسم گذاشت)", price: 60000, colorClass: "lvl-4", typeName: "پدرام صفاری", img: "jafaripiano.jpg" },
+        { name: "السای مناطق یاوری پرور", price: 85000, colorClass: "lvl-4", typeName: "بابا طاهره ایبد", img: "yavarielsa.jpg" },
+        { name: "اَبَر مرادی", price: 110000, colorClass: "lvl-4", typeName: "701 is the best", img: "Mman.png" }
+    ],
+    "yellow": [
+        { name: "جشنی در بیکینی باتم", price: 15000, colorClass: "lvl-5", typeName: "عابدی", img: "ghanebobesfanji.png" },
+        { name: "من یه پرندم ارزو دارم", price: 15000, colorClass: "lvl-5", typeName: "عابدی", img: "nezamchatr.png" },
+        { name: "!؟مرادی مایه داری باشد", price: 220000, colorClass: "lvl-5", typeName: "گِرونِس دادا", img: "moradimoney.png" },
+        { name: "ار پی چی زن مناطق صعب العبور", price: 30000, colorClass: "lvl-5", typeName: "صفاری", img: "ghafarrpg.png" },
+        { name: "کادیلاک تصادفی 480تا کار درها تمام رنگ", price: 30000, colorClass: "lvl-5", typeName: "صفاری", img: "hasanalishad.jpg" }
+    ],
+    "red": [
+        { name: "", price: 45000, colorClass: "lvl-6", typeName: "701 is the best", img: "" },
+        { name: "", price: 65000, colorClass: "lvl-6", typeName: "701 is the best", img: "" },
+        { name: "", price: 90000, colorClass: "lvl-6", typeName: "سگ سیبیلی", img: "" }
+    ],
+    "neon": [
+        { name: "", price: 150000, colorClass: "lvl-7", typeName: "صولتی", img: "" },
+        { name: "", price: 220000, colorClass: "lvl-7", typeName: "صولتی مایل به صولتی", img: "" },
+        { name: "", price: 250000, colorClass: "lvl-7", typeName: "به شدت صولتی", img: "" }
+    ],
+    "neon2": [
+        { name: "", price: 300000, colorClass: "lvl-8", typeName: "ارباب شهر من پوله!", img: "" },
+        { name: "", price: 340000, colorClass: "lvl-8", typeName: "ارباب شهر من پوله!", img: "" },
+        { name: "", price: 120000, colorClass: "lvl-8", typeName: "رفت تو پاچه ات", img: "" },
+        { name: "", price: 120000, colorClass: "lvl-8", typeName: "رفت تو پاچه ات", img: "" }
+    ],
+    "neonplus": [
+        { name: "", price: 15000, colorClass: "lvl-9", typeName: "تا دسته تو پاچه ات", img: "" },
+        { name: "", price: 15000, colorClass: "lvl-9", typeName: "تا دسته تو پاچه ات", img: "" },
+        { name: "", price: 15000, colorClass: "lvl-9", typeName: "تا دسته تو پاچه ات", img: "" },
+        { name: "", price: 220000, colorClass: "lvl-9", typeName: "دلنشین نیس ولی خب", img: "" },
+        { name: "", price: 400000, colorClass: "lvl-9", typeName: "ارباب شهر من پوله!", img: "" }
+    ]
+};
+
+const monsters = [
+    { 
+        lvl: 1, name: "حرمسرای شیمیایی", tickets: 1, reqHeroes: 1, colorClass: "lvl-1", colorName: "دور رنگ", coinsReward: 30,
+        lootTable: [ { rarity: "grey", chance: 100 } ] 
+    },
+    { 
+        lvl: 2, name: "مرده شور خانه خندان", tickets: 3, reqHeroes: 1, colorClass: "lvl-2", colorName: "چیزی نیس فقط پنج کف دست رنگ", coinsReward: 60,
+        lootTable: [ { rarity: "grey", chance: 80 }, { rarity: "green", chance: 20 } ] 
+    },
+    { 
+        lvl: 3, name: "پادگان شهیدان مزیدی", tickets: 5, reqHeroes: 2, colorClass: "lvl-3", colorName: "صورتی مایل به صورتی", coinsReward: 100,
+        lootTable: [ { rarity: "grey", chance: 50 }, { rarity: "green", chance: 35 }, { rarity: "blue", chance: 15 } ] 
+    },
+    { 
+        lvl: 4, name: "صفار سیتی دریایی", tickets: 7, reqHeroes: 3, colorClass: "lvl-4", colorName: "سیاه پر رنگ", coinsReward: 200,
+        lootTable: [ { rarity: "green", chance: 50 }, { rarity: "blue", chance: 35 }, { rarity: "purple", chance: 15 } ] 
+    },
+    { 
+        lvl: 5, name: "گی خانه یزید ابن معاویه", tickets: 8, reqHeroes: 4, colorClass: "lvl-5", colorName: "گلگیر و کاپوت تمام رنگ", coinsReward: 450,
+        lootTable: [ { rarity: "blue", chance: 50 }, { rarity: "purple", chance: 35 }, { rarity: "yellow", chance: 15 } ] 
+    },
+    { 
+        lvl: 6, name: "خیاطی فدادون بشم", tickets: 9, reqHeroes: 5, colorClass: "lvl-6", colorName: "سبز مایل به قرمز آسمانی", coinsReward: 500,
+        lootTable: [ { rarity: "purple", chance: 50 }, { rarity: "yellow", chance: 35 }, { rarity: "red", chance: 15 } ] 
+    },
+    { 
+        lvl: 7, name: "آسمان 26 اُم", tickets: 13, reqHeroes: 5, colorClass: "lvl-7", colorName: "پراید ایران خودرویی نوک مدادی تمام رنگ", coinsReward: 1000,
+        lootTable: [ { rarity: "purple", chance: 40 }, { rarity: "red", chance: 45 }, { rarity: "neon", chance: 15 } ] 
+    },
+    { 
+        lvl: 8, name: "بهشتی در جهنم دره", tickets: 15, reqHeroes: 7, colorClass: "lvl-8", colorName: "به رنگ شیشه", coinsReward: 1100,
+        lootTable: [ { rarity: "red", chance: 25 }, { rarity: "neon", chance: 45 }, { rarity: "neon2", chance: 20 } ] 
+    },
+    { 
+        lvl: 9, name: "بانک مرکزی نیگراباد", tickets: 18, reqHeroes: 9, colorClass: "lvl-9", colorName: "به رنگ رنگین کمان", coinsReward: 1200,
+        lootTable: [ { rarity: "neon", chance: 45 }, { rarity: "neon2", chance: 40 }, { rarity: "neonplus", chance: 15 } ] 
+    }
+];
+
+/* ==================================================
+   نمایش بنر خطا (Toast Error)
+================================================== */
+let toastTimeout;
+function showError(msg){
+    const toast = document.getElementById("toastError");
+    toast.innerText = msg;
+    toast.classList.add("show");
+    
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => {
+        toast.classList.remove("show");
+    }, 1500);
+}
+
+/* ==================================================
+   تغییر منو/تب بالا
+================================================== */
+function switchPage(pageId){
+    document.querySelectorAll(".pageContent").forEach(p => p.classList.remove("active"));
+    document.querySelectorAll(".menuTab").forEach(t => t.classList.remove("active"));
+    
+    document.getElementById(pageId).classList.add("active");
+    const tabs = document.querySelectorAll(".menuTab");
+    if(pageId === 'mainPage') tabs[0].classList.add("active");
+    if(pageId === 'heroesPage') tabs[1].classList.add("active");
+    if(pageId === 'huntPage') tabs[2].classList.add("active");
+    if(pageId === 'collectionPage') { tabs[3].classList.add("active"); renderCollection(); }
+    if(pageId === 'marketPage') {
+    tabs[4].classList.add("active");
+    renderMarket();
+}
+}
+
+/* ==================================================
+   رابط کاربری و به‌روزرسانی
+================================================== */
+const coin = document.getElementById("coin");
+
+function updateUI(){
+    document.getElementById("coins").innerText = coins.toLocaleString();
+    document.getElementById("stage").innerText = stage;
+    document.getElementById("energyText").innerText = Math.floor(energy);
+    document.getElementById("maxEnergyText").innerText = maxEnergy;
+    document.getElementById("power").innerText = power;
+    
+    document.getElementById("powerPrice").innerText = powerPrice.toLocaleString();
+    document.getElementById("energyPrice").innerText = energyPrice.toLocaleString();
+    document.getElementById("regenPrice").innerText = regenPrice.toLocaleString();
+    document.getElementById("goldenChancePrice").innerText = goldenChancePrice.toLocaleString();
+    document.getElementById("goldenMultiPrice").innerText = goldenMultiPrice.toLocaleString();
+
+    document.getElementById("energyFill").style.width = (energy / maxEnergy * 100) + "%";
+
+    document.getElementById("warTicketText").innerText = warTickets;
+    document.getElementById("maxWarTicketText").innerText = maxWarTickets;
+
+    document.getElementById("libRegenTimeText").innerText = (warTicketInterval / 60000).toFixed(1);
+    document.getElementById("maxTicketPrice").innerText = maxTicketPrice.toLocaleString();
+    document.getElementById("ticketSpeedPrice").innerText = ticketSpeedPrice.toLocaleString();
+
+    document.getElementById("nftCount").innerText = myNFTs.length;
+    updateRank();
+}
+
+function checkStage(){
+    if(coins >= 50000) { stage = 8; coin.src = "moradi.jpg";}
+    else if(coins >= 30000) { stage = 7; coin.src = "sharifi.jpg";}
+    else if(coins >= 15000) { stage = 6; coin.src = "nezam.jpg"; }
+    else if(coins >= 5500) { stage = 5; coin.src = "gh.jpg"; }
+    else if(coins >= 1000) { stage = 4; coin.src = "sfr.jpg"; }
+    else if(coins >= 300) { stage = 3; coin.src = "ghafar.jpg"; }
+    else if(coins >= 50) { stage = 2; coin.src = "est.jpg"; }
+    else { stage = 1; coin.src = "ghane.jpg"; }
+}
+
+/* ==================================================
+   کلیک روی سکه
+================================================== */
+coin.onclick = function(e){
+    if(energy < 1) return;
+
+    energy -= 1;
+    totalClicks++;
+
+    let isGolden = (Math.random() * 100) < goldenChance;
+    let earned = power * (isGolden ? goldenMultiplier : 1);
+
+    if(isGolden) {
+        totalGoldenClicks++;
+    }
+
+    coins += earned;
+    totalCoinsEarned += earned;
+
+    spawnFlyingCoin(e, earned, isGolden);
+    checkStage();
+    updateUI();
+    updateStats();
+    saveGame();
+    renderMarket();
+};
+
+function spawnFlyingCoin(e, earnedCoins, isGolden) {  
+    const coinElem = document.createElement("div");  
+    coinElem.className = isGolden ? "flying-coin golden" : "flying-coin";  
+    coinElem.innerHTML = isGolden ? `✨ +${earnedCoins}` : `🪙 +${earnedCoins}`;  
+      
+    const gameRect = document.getElementById("game").getBoundingClientRect();  
+    let clickX = (e ? e.clientX : (gameRect.left + gameRect.width / 2)) - gameRect.left;  
+    let clickY = (e ? e.clientY : (gameRect.top + gameRect.height / 2)) - gameRect.top;  
+  
+    coinElem.style.left = clickX + "px";  
+    coinElem.style.top = clickY + "px";  
+    coinElem.style.setProperty('--dx', `${(Math.random() - 0.5) * 50}px`);  
+  
+    document.getElementById("game").appendChild(coinElem);  
+    setTimeout(() => coinElem.remove(), 800);  
+}
+
+function playSound(freq, gainVal){
+    try{
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "triangle"; osc.frequency.value = freq; gain.gain.value = gainVal;
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(); gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.08);
+        osc.stop(ctx.currentTime + 0.08);
+    }catch(e){}
+}
+
+/* ==================================================
+   خرید ارتقاها
+================================================== */
+document.getElementById("upgradePower").onclick = () => buyUpgrade('power');
+document.getElementById("upgradeEnergy").onclick = () => buyUpgrade('energy');
+document.getElementById("upgradeRegen").onclick = () => buyUpgrade('regen');
+
+document.getElementById("upgradeGoldenChance").onclick = () => {
+    if(coins >= goldenChancePrice) {
+        coins -= goldenChancePrice;
+        goldenChance += 1;
+        goldenChancePrice = Math.floor(goldenChancePrice * 2);
+        updateUI(); saveGame();
+    } else {
+        showError("⚠️ سکه کافی نداری!");
+    }
+};
+
+document.getElementById("upgradeGoldenMulti").onclick = () => {
+    if(coins >= goldenMultiPrice) {
+        coins -= goldenMultiPrice;
+        goldenMultiplier += 1;
+        goldenMultiPrice = Math.floor(goldenMultiPrice * 2.2);
+        updateUI(); saveGame();
+    } else {
+        showError("⚠️ سکه کافی نداری!");
+    }
+};
+
+function buyUpgrade(type){
+    let success = false;
+    for(let i = 0; i < buyAmount; i++){
+        if(type === "power" && coins >= powerPrice){
+            coins -= powerPrice; power++; powerPrice = Math.floor(powerPrice * 1.7); success = true;
+        } else if(type === "energy" && coins >= energyPrice){
+            coins -= energyPrice; maxEnergy += 20; energy = maxEnergy; energyPrice = Math.floor(energyPrice * 1.8); success = true;
+        } else if(type === "regen" && coins >= regenPrice){
+            coins -= regenPrice; regen += 0.5; regenPrice = Math.floor(regenPrice * 2); success = true;
+        }
+    }
+    if(!success){
+        showError("⚠️ سکه کافی نداری!");
+    } else {
+        updateUI(); saveGame();
+    }
+}
+
+['1','5','10'].forEach(amt => {
+    document.getElementById('buy'+amt).onclick = function() { 
+        document.querySelectorAll('.buyModeBtn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        buyAmount = parseInt(amt); 
+    };
+});
+
+/* ==================================================
+   قهرمان‌ها
+================================================== */
+function renderHeroes(){
+    const list = document.getElementById("heroList");
+    document.getElementById("ownedHeroCount").innerText = ownedHeroes.length;
+    list.innerHTML = "";
+    heroes.forEach(hero => {
+        const owned = ownedHeroes.includes(hero.id);
+        const box = document.createElement("div");
+        box.className = "panel";
+        box.innerHTML = `
+            <div style="font-size:14px; font-weight:900;">🦸 ${hero.name}</div>
+            <div style="margin:4px 0; color:#aaa;">⚔️ قدرت شکار: ${hero.power} | 🪙 قیمت: ${hero.price.toLocaleString()}</div>
+            <button class="actionBtn" ${owned ? "disabled" : ""} onclick="buyHero(${hero.id})">
+                ${owned ? "✅ خریداری شده" : "🛒 خرید قهرمان"}
+            </button>
+        `;
+        list.appendChild(box);
+    });
+}
+
+window.buyHero = function(id){
+    const hero = heroes.find(h => h.id === id);
+    if(hero && !ownedHeroes.includes(id)){
+        if(coins >= hero.price) {
+            coins -= hero.price;
+            ownedHeroes.push(id);
+            updateUI(); renderHeroes(); saveGame();
+        } else {
+            showError("⚠️ سکه کافی نداری!");
+        }
+    }
+};
+
+function updateWarTickets(){
+    const now = Date.now();
+    const elapsed = now - lastWarTicketTime;
+    const ticketsToAdd = Math.floor(elapsed / warTicketInterval);
+    if(ticketsToAdd > 0){
+        warTickets = Math.min(maxWarTickets, warTickets + ticketsToAdd);
+        lastWarTicketTime = now;
+        saveGame();
+    }
+    document.getElementById("warTicketText").innerText = warTickets;
+}
+
+document.getElementById("buyWarTicket").onclick = () => {
+    if(warTickets >= maxWarTickets) {
+        showError("⚠️ ظرفیت پاپت‌های شما پر است!");
+    } else if(coins < warTicketPrice) {
+        showError("⚠️ سکه کافی نداری!");
+    } else {
+        coins -= warTicketPrice; warTickets++;
+        updateUI(); updateWarTickets(); saveGame();
+    }
+};
+
+/* مدیریت ارتقای پاپت‌ها در بخش شکار */
+document.getElementById("upgradeMaxTickets").onclick = () => {
+    if(coins >= maxTicketPrice){
+        coins -= maxTicketPrice;
+        maxWarTickets += 2;
+        maxTicketPrice = Math.floor(maxTicketPrice * 2.2);
+        updateUI(); saveGame();
+        alert("🏺 ظرفیت پاپت‌های شما افزایش یافت!");
+    } else { 
+        showError("⚠️ سکه کافی نداری!"); 
+    }
+};
+
+document.getElementById("upgradeTicketSpeed").onclick = () => {
+    if(warTicketInterval <= 2 * 60 * 1000){
+        showError("⚠️ سرعت شارژ پاپت به حداکثر رسیده است!");
+        return;
+    }
+    if(coins >= ticketSpeedPrice){
+        coins -= ticketSpeedPrice;
+        warTicketInterval = Math.max(2 * 60 * 1000, warTicketInterval - (1.5 * 60 * 1000));
+        ticketSpeedPrice = Math.floor(ticketSpeedPrice * 2.5);
+        updateUI(); saveGame();
+        alert("📖 زمان بازیابی پاپت ها کاهش یافت!");
+    } else { 
+        showError("⚠️ سکه کافی نداری!"); 
+    }
+};
+
+/* ==================================================
+   سیستم هیولاها و لوپ شکار
+================================================== */
+function renderMonsters(){
+    const list = document.getElementById("monsterList");
+    list.innerHTML = "";
+    monsters.forEach(m => {
+        const box = document.createElement("div");
+        box.className = `monsterCard ${m.colorClass}`;
+        box.innerHTML = `
+            <h3 style="margin-bottom:4px;">👹 ${m.name} (سطح ${m.lvl})</h3>
+            <div style="font-size:12px; margin-bottom:4px;">رنگ: <strong>${m.colorName}</strong></div>
+            <div style="font-size:12px; color:#ff9800; margin-bottom:4px;">🦸 قهرمان مورد نیاز: حداقل ${m.reqHeroes} قهرمان</div>
+            <div style="font-size:12px; color:#ffd700;">🎟️ پاپت مورد نیاز: ${m.tickets}</div>
+            <div style="font-size:11px; color:#28a745; margin-bottom:6px;">🪙 سکه پاداش: +${m.coinsReward.toLocaleString()}</div>
+            <button class="actionBtn" onclick="huntMonster(${m.lvl})">⚔️ بزن بریم</button>
+        `;
+        list.appendChild(box);
+    });
+}
+
+function getRandomNFT(lootTable) {
+    let rand = Math.random() * 100;
+    let cumulative = 0;
+    let selectedRarity = lootTable[0].rarity;
+    
+    for (let item of lootTable) {
+        cumulative += item.chance;
+        if (rand <= cumulative) {
+            selectedRarity = item.rarity;
+            break;
+        }
+    }
+    
+    const options = nftDatabase[selectedRarity];
+    const chosenNFT = options[Math.floor(Math.random() * options.length)];
+    
+    return { ...chosenNFT, instanceId: Date.now() + Math.random() };
+}
+
+window.huntMonster = function(lvl){
+    const m = monsters.find(x => x.lvl === lvl);
+    if(!m) return;
+
+    if(ownedHeroes.length < m.reqHeroes){
+        showError(`⚠️ نیاز به حداقل ${m.reqHeroes} قهرمان داری!`);
+        return;
+    }
+
+    if(warTickets < m.tickets){
+        showError(`⚠️ پاپت کافی نداری! (نیاز: ${m.tickets})`);
+        return;
+    }
+
+    warTickets -= m.tickets;
+    coins += m.coinsReward;
+    totalCoinsEarned += m.coinsReward;
+
+    let wonNFT = getRandomNFT(m.lootTable);
+    myNFTs.push(wonNFT);
+
+    updateUI(); saveGame();
+    alert(`🎉 حمله موفقیت‌آمیز بود!\nشما از ${m.name} با موفقیت زنده بیرون امدید\n\n🎁 پاداش (بسیار زیاد) دریافتی:\n🪙 ${m.coinsReward.toLocaleString()} سکه\n🎨 کارت دریافت شده: [ ${wonNFT.name} ]\n💰 ارزش فروش: ${wonNFT.price.toLocaleString()} سکه`);
+};
+
+/* ==================================================
+   رندر و مدیریت کلکسیون (NFT)
+================================================== */
+function renderCollection(){
+    const list = document.getElementById("collectionList");
+    list.innerHTML = "";
+    
+    if(myNFTs.length === 0){
+        list.innerHTML = `<div style="text-align:center; color:#888; padding:20px; font-size:12px;">شما هنوز هیچ کارتی در کلکسیون ندارید! به شکارگاه بروید و پس از کمی کنده کاری به اینجا بازگردید.</div>`;
+        return;
+    }
+
+    myNFTs.forEach(nft => {
+        const box = document.createElement("div");
+        box.className = `nftCard ${nft.colorClass}`;
+        
+        let imgHtml = nft.img ? `<img src="${nft.img}" class="nftImg" alt="NFT Image">` : '';
+
+        box.innerHTML = `
+            <div style="font-size:15px; font-weight:900;">${nft.name}</div>
+            ${imgHtml}
+            <div style="font-size:11px; color:#aaa; margin:4px 0;">نوع: ${nft.typeName}</div>
+            <div style="font-size:12px; color:#ffd700; margin-bottom:8px;">💰 ارزش بازار: ${nft.price.toLocaleString()} سکه</div>
+            <button class="actionBtn" style="background: linear-gradient(180deg, #28a745, #1e7e34);" onclick="sellNFT(${nft.instanceId})">🏷️ فروش کارت</button>
+        `;
+        list.appendChild(box);
+    });
+}
+
+window.sellNFT = async function(instanceId){
+    const index = myNFTs.findIndex(n => n.instanceId === instanceId);
+    if(index === -1) return;
+    if(!firebaseReady || !playerId){
+        showError("⚠️ بازار آنلاین هنوز متصل نشده است!");
+        return;
+    }
+
+    const sold = myNFTs[index];
+    const listing = {
+        sellerId: playerId,
+        sellerName: playerName || "بازیکن ناشناس",
+        name: sold.name || "کارت بدون نام",
+        price: Number(sold.price) || 0,
+        colorClass: sold.colorClass || "lvl-1",
+        typeName: sold.typeName || "",
+        img: sold.img || "",
+        originalInstanceId: String(sold.instanceId),
+        createdAt: firebase.database.ServerValue.TIMESTAMP
+    };
+
+    try{
+        await marketRef.push(listing);
+        myNFTs.splice(index, 1);
+        updateUI(); renderCollection(); saveGame();
+        playSound(1000, 0.08);
+        showError("✅ کارت با موفقیت وارد بازار شد!");
+    }catch(err){
+        console.error(err);
+        showError("❌ قرار دادن کارت در بازار ناموفق بود.");
+    }
+};
+
+/* ==================================================
+   شارژ انرژی اتوماتیک
+================================================== */
+setInterval(() => {
+    if(energy < maxEnergy){
+        energy = Math.min(maxEnergy, energy + (regen / 10));
+        updateUI();
+    }
+}, 100);
+
+/* ==================================================
+   آمار و رتبه
+================================================== */
+function updateStats(){
+    document.getElementById("clickCount").innerText = totalClicks;
+    document.getElementById("coinCount").innerText = totalCoinsEarned.toLocaleString();
+    document.getElementById("goldenClickCount").innerText = totalGoldenClicks;
+    updateRank();
+}
+
+function updateRank(){
+
+    const earned = Number(totalCoinsEarned) || 0;
+
+    const ranks = [
+        { min: 0,      max: 50,      name: "حروم لقمه" },
+        { min: 50,     max: 1000,    name: "نیگا" },
+        { min: 1000,   max: 15000,   name: "mr.26 kir" },
+        { min: 15000,  max: 30000,   name: "سکه باز جنده" },
+        { min: 30000,  max: 50000,  name: "خسته شو حاجی" },
+        { min: 50000, max: 100000,  name: "خوار مادر سکه بازی" },
+        { min: 100000, max: 200000,  name: "حضرت سکه های نیگا" },
+        { min: 200000, max: Infinity, name: "ابر کون گشاد کلیکر" }
+    ];
+
+    let currentRank = ranks[0];
+
+    // پیدا کردن رتبه فعلی
+    for(let i = 0; i < ranks.length; i++){
+
+        if(earned >= ranks[i].min){
+            currentRank = ranks[i];
+        }
+
+    }
+
+    let percent = 100;
+
+    // اگر هنوز رتبه آخر نیست
+    if(currentRank.max !== Infinity){
+
+        const needed = currentRank.max - currentRank.min;
+        const progress = earned - currentRank.min;
+
+        percent = (progress / needed) * 100;
+
+        // جلوگیری از کمتر از صفر یا بیشتر از 100
+        percent = Math.max(0, Math.min(100, percent));
+    }
+
+    // نمایش نام رتبه
+    const rankText = document.getElementById("rankText");
+
+    if(rankText){
+        rankText.innerText = currentRank.name;
+    }
+
+    // حرکت نوار
+    const progressFill = document.getElementById("progressFill");
+
+    if(progressFill){
+
+        progressFill.style.width = percent + "%";
+
+    }
+
+    // نمایش درصد
+    const progressText = document.getElementById("progressText");
+
+    if(progressText){
+
+        progressText.innerText = Math.floor(percent) + "%";
+
+    }
+}
+
+document.getElementById("dailyReward").onclick = () => {
+    const today = new Date().toDateString();
+    if(localStorage.getItem("dailyReward") === today){
+        alert("برو دیروز بیا جیگر ⚠️");
+    } else {
+    coins += 100;
+    totalCoinsEarned += 100;
+    localStorage.setItem("dailyReward", today);
+        updateUI(); alert("🎉 100 سکه دریافت کردی");
+    }
+};
+
+/* ==================================================
+   سیستم کازینو
+================================================== */
+const casinoModal = document.getElementById("casinoModal");
+document.getElementById("openCasinoBtn").onclick = () => casinoModal.style.display = 'flex';
+document.getElementById("closeCasinoBtn").onclick = () => casinoModal.style.display = 'none';
+
+document.getElementById("spinCasinoBtn").onclick = () => {
+    let bet = parseInt(document.getElementById("betAmount").value);
+    if(!bet || bet < 1000) { showError("⚠️ حداقل مبلغ شرط ۱,۰۰۰ سکه ناقابل است!"); return; }
+    if(coins < bet) { showError("⚠️ مستر سکه کافی نداری!"); return; }
+
+    coins -= bet; updateUI();
+    let symbols = ["💀", "🍋", "🔔", "⭐", "💎", "7️⃣"];
+    let counter = 0;
+    let interval = setInterval(() => {
+        document.getElementById("casinoSlots").innerText = 
+            `${symbols[Math.floor(Math.random()*6)]} ${symbols[Math.floor(Math.random()*6)]} ${symbols[Math.floor(Math.random()*6)]}`;
+        counter++;
+        if(counter >= 12){
+            clearInterval(interval);
+            let win = Math.random() > 0.5 ? Math.floor(bet * 1.5) : 0;
+            coins += win;
+            document.getElementById("casinoResult").innerText = win > 0 ? `🎉 ${win} سکه بردی!` : "💥 پوچ شد!";
+            updateUI(); saveGame();
+        }
+    }, 80);
+};
+
+
+/* ==================================================
+   بازار آنلاین
+   ================================================== */
+function initFirebaseMarket(){
+    try{
+        if(firebaseConfig.apiKey === "YOUR_API_KEY"){
+            document.getElementById("marketStatus").innerText =
+                "⚠️";
+            return;
+        }
+        if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
+        firebase.auth().signInAnonymously().then(result => {
+            playerId = result.user.uid;
+            firebaseReady = true;
+            marketRef = firebase.database().ref("market");
+            playerRef = firebase.database().ref("players/" + playerId);
+
+            playerRef.child("name").once("value").then(snap => {
+                playerName = snap.val() || "بازیکن " + playerId.slice(0,6);
+                document.getElementById("playerNameInput").value = playerName;
+                updateMarketStatus();
+            });
+
+            marketRef.on("value", snap => {
+                marketItemsCache = snap.val() || {};
+                renderMarket();
+            });
+            updateMarketStatus();
+            listenForPendingCoins();
+        }).catch(err => {
+            console.error(err);
+            document.getElementById("marketStatus").innerText = "❌ اتصال به بازار برقرار نشد.";
+        });
+    }catch(err){
+        console.error(err);
+        document.getElementById("marketStatus").innerText = "❌ تنظیمات Firebase مشکل دارد.";
+    }
+}
+
+function updateMarketStatus(){
+    const el = document.getElementById("marketStatus");
+    if(firebaseReady && el){
+        el.innerText = "🟢 آنلاین | نام شما: " + (playerName || "بازیکن ناشناس");
+        el.style.color = "#00ff9d";
+    }
+}
+
+document.getElementById("savePlayerNameBtn").onclick = async () => {
+    if(!firebaseReady || !playerRef){
+        showError("⚠️ ابتدا اتصال بازار را برقرار کنید.");
+        return;
+    }
+    const input = document.getElementById("playerNameInput");
+    const newName = (input.value || "").trim().replace(/[<>]/g, "");
+    if(newName.length < 2){
+        showError("⚠️ نام باید حداقل ۲ حرف باشد.");
+        return;
+    }
+    playerName = newName.slice(0,20);
+    try{
+        await playerRef.update({name: playerName});
+        updateMarketStatus();
+        showError("✅ نام بازیکن ثبت شد!");
+    }catch(err){
+        console.error(err);
+        showError("❌ ذخیره نام انجام نشد.");
+    }
+};
+
+function marketCardHTML(item, id, isMine){
+    const imgHtml = item.img ? `<img src="${item.img}" class="nftImg" alt="کارت">` : "";
+    if(isMine){
+        return `
+            <div class="marketCard ${item.colorClass || "lvl-1"}">
+                <div style="font-size:15px;font-weight:900;">${item.name}</div>
+                ${imgHtml}
+                <div style="font-size:11px;color:#aaa;">نوع: ${item.typeName || "-"}</div>
+                <div class="marketPrice">🏷️ قیمت فروش: ${Number(item.price).toLocaleString()} سکه</div>
+                <div class="seller">👤 فروشنده: ${item.sellerName || "ناشناس"}</div>
+                <button class="actionBtn marketMine" onclick="cancelMarketListing('${id}')">❌ برداشتن کارت از بازار</button>
+            </div>`;
+    }
+    return `
+        <div class="marketCard ${item.colorClass || "lvl-1"}">
+            <div style="font-size:15px;font-weight:900;">${item.name}</div>
+            ${imgHtml}
+            <div style="font-size:11px;color:#aaa;">نوع: ${item.typeName || "-"}</div>
+            <div class="marketPrice">💰 قیمت: ${Number(item.price).toLocaleString()} سکه</div>
+            <div class="seller">👤 فروشنده: ${item.sellerName || "بازیکن ناشناس"}</div>
+            <button class="actionBtn marketBtn" onclick="buyMarketCard('${id}')">🛒 خرید کارت</button>
+        </div>`;
+}
+
+function renderMarket(){
+    const list = document.getElementById("marketList");
+    const mine = document.getElementById("myMarketList");
+    if(!list || !mine) return;
+
+    const entries = Object.entries(marketItemsCache || {});
+    const others = entries.filter(([id,item]) => item && item.sellerId !== playerId);
+    const mineEntries = entries.filter(([id,item]) => item && item.sellerId === playerId);
+
+    list.innerHTML = others.length
+        ? others.map(([id,item]) => marketCardHTML(item,id,false)).join("")
+        : `<div class="marketEmpty">🏪 فعلاً کارت بازیکنان دیگر در بازار نیست.</div>`;
+
+    mine.innerHTML = mineEntries.length
+        ? mineEntries.map(([id,item]) => marketCardHTML(item,id,true)).join("")
+        : `<div class="marketEmpty">هنوز کارتی برای فروش نگذاشته‌ای.</div>`;
+}
+
+window.cancelMarketListing = async function(id){
+    if(!firebaseReady || !marketRef) return;
+    const item = marketItemsCache[id];
+    if(!item || item.sellerId !== playerId) return;
+
+    try{
+        await marketRef.child(id).remove();
+        myNFTs.push({
+            name:item.name, price:Number(item.price)||0,
+            colorClass:item.colorClass||"lvl-1", typeName:item.typeName||"",
+            img:item.img||"", instanceId:item.originalInstanceId || (Date.now()+Math.random())
+        });
+        saveGame(); updateUI(); renderCollection(); renderMarket();
+        showError("✅ کارت از بازار برداشته شد.");
+    }catch(err){
+        console.error(err);
+        showError("❌ برداشتن کارت ناموفق بود.");
+    }
+};
+
+window.buyMarketCard = async function(id){
+    if(!firebaseReady || !marketRef || !playerId){
+        showError("⚠️ بازار آنلاین متصل نیست.");
+        return;
+    }
+
+    const itemRef = marketRef.child(id);
+    try{
+        const result = await itemRef.transaction(current => {
+if(current === null) return;
+
+if(current.sellerId === playerId){
+    return;
+}
+
+if(coins < Number(current.price)){
+    return;
+}
+
+return {
+    ...current,
+    sold:true,
+    buyerId:playerId
+};
+        });
+
+        if(!result.committed){
+            showError("⚠️ کارت قبلاً خریداری شده یا سکه کافی نداری.");
+            return;
+        }
+
+        const sold = result.snapshot.val();
+        const price = Number(sold.price) || 0;
+
+        coins -= price;
+        myNFTs.push({
+            name:sold.name, price:price,
+            colorClass:sold.colorClass||"lvl-1", typeName:sold.typeName||"",
+            img:sold.img||"", instanceId:Date.now()+Math.random()
+        });
+
+const sellerRef = firebase.database().ref("players/" + sold.sellerId + "/pendingCoins");
+await sellerRef.transaction(v => (Number(v)||0) + price);
+
+// حذف کارت از بازار بعد از خرید
+await itemRef.remove();
+
+saveGame(); 
+updateUI(); 
+renderCollection(); 
+renderMarket();
+
+playSound(1200,0.08);
+
+alert(`🎉 خرید موفق!\nکارت «${sold.name}» به کلکسیون شما اضافه شد.\n💰 مبلغ: ${price.toLocaleString()} سکه`);
+    }catch(err){
+        console.error(err);
+        showError("❌ خرید کارت انجام نشد.");
+    }
+};
+
+function listenForPendingCoins(){
+    if(!playerRef) return;
+    playerRef.child("pendingCoins").on("value", async snap => {
+        const amount = Number(snap.val()) || 0;
+        if(amount <= 0) return;
+        coins += amount;
+        totalCoinsEarned += amount;
+        await playerRef.child("pendingCoins").set(0);
+        updateUI(); saveGame();
+        showError(`💰 ${amount.toLocaleString()} سکه از فروش کارت دریافت کردی!`);
+    });
+}
+
+/* ==================================================
+   ذخیره و بارگذاری
+================================================== */
+function saveGame(){
+    const data = { 
+        coins, stage, power, energy, maxEnergy, regen, 
+        powerPrice, energyPrice, regenPrice, goldenChance, 
+        goldenMultiplier, goldenChancePrice, goldenMultiPrice,
+        totalClicks, totalCoinsEarned, totalGoldenClicks, 
+        ownedHeroes, myNFTs, warTickets, maxWarTickets, warTicketInterval, 
+        lastWarTicketTime, maxTicketPrice, ticketSpeedPrice 
+    };
+    localStorage.setItem("CoinClickerSave", JSON.stringify(data));
+}
+
+function loadGame(){
+    const saved = localStorage.getItem("CoinClickerSave");
+    if(saved){
+        const d = JSON.parse(saved);
+        coins = d.coins || 0; stage = d.stage || 1; power = d.power || 1;
+        energy = d.energy || 100; maxEnergy = d.maxEnergy || 100; regen = d.regen || 1;
+        powerPrice = d.powerPrice || 20; energyPrice = d.energyPrice || 40; regenPrice = d.regenPrice || 60;
+        goldenChance = d.goldenChance || 2; goldenMultiplier = d.goldenMultiplier || 5;
+        goldenChancePrice = d.goldenChancePrice || 150; goldenMultiPrice = d.goldenMultiPrice || 300;
+        totalClicks = d.totalClicks || 0; totalCoinsEarned = d.totalCoinsEarned || 0; totalGoldenClicks = d.totalGoldenClicks || 0;
+        ownedHeroes = d.ownedHeroes || []; myNFTs = d.myNFTs || []; warTickets = d.warTickets ?? 10;
+        maxWarTickets = d.maxWarTickets || 10; warTicketInterval = d.warTicketInterval || (10 * 60 * 1000);
+        lastWarTicketTime = d.lastWarTicketTime || Date.now();
+        maxTicketPrice = d.maxTicketPrice || 25000; ticketSpeedPrice = d.ticketSpeedPrice || 40000;
+    }
+}
+if(maxWarTickets === 10){
+    let maxWarTickets = 5;
+}
+if(warTickets >= 5){
+    let warTickets = 5;
+}
+
+document.getElementById("saveBtn").onclick = () => { saveGame(); alert("بازی ذخیره شد."); };
+document.getElementById("resetBtn").onclick = () => { if(confirm("ایا مطمئنی؟ همه دستاورد ها و پیشرفت ها پاک میشوند!")){ localStorage.clear(); location.reload(); }};
+
+document.getElementById("exportBtn").onclick = () => {
+    let blob = new Blob([localStorage.getItem("CoinClickerSave")], {type: "application/json"});
+    let a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "save.json"; a.click();
+};
+
+document.getElementById("importBtn").onclick = () => {
+    let input = document.createElement("input"); input.type = "file";
+    input.onchange = e => {
+        let reader = new FileReader();
+        reader.onload = () => { localStorage.setItem("CoinClickerSave", reader.result); loadGame(); updateUI(); alert("وارد شد!"); };
+        reader.readAsText(e.target.files[0]);
+    }; input.click();
+};
+
+/* راه‌اندازی اولیه */
+loadGame();
+checkStage();
+renderHeroes();
+renderMonsters();
+updateWarTickets();
+updateUI();
+updateStats();
+initFirebaseMarket();
+</script>
+</body>
+</html>
