@@ -931,7 +931,7 @@ function renderMonsters(){
         const box = document.createElement("div");
         box.className = `monsterCard ${m.colorClass}`;
         box.innerHTML = `
-            <h3 style="margin-bottom:4px;">👹 ${m.name} (سطح ${m.lvl})</h3>
+            <h3 style="margin-bottom:4px;">👹 ${m.name} ${m.lvl}</h3>
             <div style="font-size:12px; margin-bottom:4px;">رنگ: <strong>${m.colorName}</strong></div>
             <div style="font-size:12px; color:#ff9800; margin-bottom:4px;">🦸 قهرمان مورد نیاز: حداقل ${m.reqHeroes} قهرمان</div>
             <div style="font-size:12px; color:#ffd700;">🎟️ پاپت مورد نیاز: ${m.tickets}</div>
