@@ -1415,12 +1415,6 @@ function loadGame(){
         maxTicketPrice = d.maxTicketPrice || 25000; ticketSpeedPrice = d.ticketSpeedPrice || 40000;
     }
 }
-if(maxWarTickets === 10){
-    let maxWarTickets = 5;
-}
-if(warTickets >= 5){
-    let warTickets = 5;
-}
 
 document.getElementById("saveBtn").onclick = () => { saveGame(); alert("بازی ذخیره شد."); };
 document.getElementById("resetBtn").onclick = () => { if(confirm("ایا مطمئنی؟ همه دستاورد ها و پیشرفت ها پاک میشوند!")){ localStorage.clear(); location.reload(); }};
