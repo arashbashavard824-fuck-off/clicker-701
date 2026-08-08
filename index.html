@@ -443,7 +443,7 @@ firebase.initializeApp(firebaseConfig);
     <div id="heroesPage" class="pageContent">
         <div class="scrollArea">
             <div class="panel">
-                <h3>🦸 قهرمان‌های من</h3>
+                <h3>🦸 قهرمان‌های من (<span id="ownedHeroCount">0</span> / 9)</h3>
             </div>
             <div id="heroList"></div>
         </div>
@@ -1070,7 +1070,7 @@ function updateStats(){
 
 function updateRank(){
 
-    const earned = Number(totalCoinsEarned) || 0;
+    const earned = Number(coins) || 0;
 
     const ranks = [
         { min: 0,      max: 50,      name: "حروم لقمه" },
@@ -1080,7 +1080,9 @@ function updateRank(){
         { min: 30000,  max: 50000,  name: "خسته شو حاجی" },
         { min: 50000, max: 100000,  name: "خوار مادر سکه بازی" },
         { min: 100000, max: 200000,  name: "حضرت سکه های نیگا" },
-        { min: 200000, max: Infinity, name: "ابر کون گشاد کلیکر" }
+        { min: 200000, max: 300000, name: "ابر کون گشاد کلیکر" },
+        { min: 300000, max: 500000, name: "خود خری" },
+        { min: 500000, max: infinity, name: "گاییَنده سکه" }
     ];
 
     let currentRank = ranks[0];
