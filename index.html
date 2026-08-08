@@ -1061,78 +1061,64 @@ setInterval(() => {
 /* ==================================================
    آمار و رتبه
 ================================================== */
-function updateStats(){
-    document.getElementById("clickCount").innerText = totalClicks;
-    document.getElementById("coinCount").innerText = totalCoinsEarned.toLocaleString();
-    document.getElementById("goldenClickCount").innerText = totalGoldenClicks;
-    updateRank();
-}
-
 function updateRank(){
 
-    const earned = Number(totalCoinsEarned) || 0;
+    // رتبه فقط بر اساس سکه فعلی بازیکن
+    const currentCoins = Number(coins) || 0;
 
     const ranks = [
         { min: 0,      max: 50,      name: "حروم لقمه" },
         { min: 50,     max: 1000,    name: "نیگا" },
         { min: 1000,   max: 15000,   name: "mr.26 kir" },
         { min: 15000,  max: 30000,   name: "سکه باز جنده" },
-        { min: 30000,  max: 50000,  name: "خسته شو حاجی" },
-        { min: 50000, max: 100000,  name: "خوار مادر سکه بازی" },
-        { min: 100000, max: 200000,  name: "حضرت سکه های نیگا" },
-        { min: 200000, max: 300000, name: "ابر کون گشاد کلیکر" },
-        { min: 300000, max: 500000, name: "خود خری" },
-        { min: 500000, max: infinity, name: "گاییَنده سکه" }
+        { min: 30000,  max: 50000,   name: "خسته شو حاجی" },
+        { min: 50000,  max: 100000, name: "خوار مادر سکه بازی" },
+        { min: 100000, max: 200000, name: "حضرت سکه های نیگا" },
+        { min: 200000, max: Infinity, name: "ابر کون گشاد کلیکر" }
     ];
 
     let currentRank = ranks[0];
 
-    // پیدا کردن رتبه فعلی
+    // پیدا کردن رتبه بر اساس سکه فعلی
     for(let i = 0; i < ranks.length; i++){
-
-        if(earned >= ranks[i].min){
+        if(currentCoins >= ranks[i].min){
             currentRank = ranks[i];
         }
-
     }
 
     let percent = 100;
 
-    // اگر هنوز رتبه آخر نیست
+    // محاسبه پیشرفت تا رتبه بعدی
     if(currentRank.max !== Infinity){
 
         const needed = currentRank.max - currentRank.min;
-        const progress = earned - currentRank.min;
+        const progress = currentCoins - currentRank.min;
 
         percent = (progress / needed) * 100;
 
-        // جلوگیری از کمتر از صفر یا بیشتر از 100
+        // محدود کردن درصد بین 0 تا 100
         percent = Math.max(0, Math.min(100, percent));
     }
 
-    // نمایش نام رتبه
+    // نمایش رتبه
     const rankText = document.getElementById("rankText");
 
     if(rankText){
         rankText.innerText = currentRank.name;
     }
 
-    // حرکت نوار
+    // حرکت نوار پیشرفت
     const progressFill = document.getElementById("progressFill");
 
     if(progressFill){
-
         progressFill.style.width = percent + "%";
-
     }
 
     // نمایش درصد
     const progressText = document.getElementById("progressText");
 
     if(progressText){
-
         progressText.innerText = Math.floor(percent) + "%";
-
     }
 }
 
