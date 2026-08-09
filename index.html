@@ -443,7 +443,7 @@ firebase.initializeApp(firebaseConfig);
     <div id="heroesPage" class="pageContent">
         <div class="scrollArea">
             <div class="panel">
-                <h3>🦸 قهرمان‌های من (<span id="ownedHeroCount">0</span> / 9)</h3>
+                <h3>🦸 قهرمان‌های من (<span id="ownedHeroCount">0</span> / 14)</h3>
             </div>
             <div id="heroList"></div>
         </div>
@@ -538,17 +538,22 @@ let lastWarTicketTime = Date.now();
 let maxTicketPrice = 25000;
 let ticketSpeedPrice = 100000;
 
+// =============== نامگذاری قهرمان ها =================
 const heroes = [
-    { id: 1, name: "ضیا نظام گیسو کمندیان", power: 50, price: 1500 },
-    { id: 2, name: "مینی صفار جنگی زاده", power: 180, price: 8000 },
-    { id: 3, name: "لوله باز کن منزل بانو اشلی", power: 320, price: 25000 },
-    { id: 4, name: "ابر نظام جهادگر", power: 500, price: 60000 },
-    { id: 5, name: "ممد قلی جان بر کف", power: 680, price: 120000 },
-    { id: 6, name: "گودرت الله غفاریان", power: 850, price: 200000 },
-    { id: 7, name: "فرشته ای از بنگلادش", power: 1000, price: 350000 },
+    { id: 1, name: "ضیا نظام گیسو کمندیان", power: 0, price: 1500 },
+    { id: 2, name: "مینی صفار جنگی زاده", power: 0, price: 8000 },
+    { id: 3, name: "لوله باز کن منزل بانو اشلی", power: 0, price: 25000 },
+    { id: 4, name: "ابر نظام جهادگر", power: 0, price: 60000 },
+    { id: 5, name: "ممد قلی جان بر کف", power: 0, price: 120000 },
+    { id: 6, name: "گودرت الله غفاریان", power: 0, price: 200000 },
+    { id: 7, name: "فرشته ای از بنگلادش", power: 0, price: 350000 },
     { id: 8, name: "حجت الاسلام سوییتی ابن کیریستیانو اوس غلام", power: 1126, price: 420000 },
-    { id: 9, name: "بنای کاخ شاه سرزمین نیگریان", power: 1469, price: 500000 },
-    { id: 10, name: "ارتشبد سردار دوشنبه عابدی زاده کابلی", power: 2185, price: 559000 }
+    { id: 9, name: "بَنّای کاخ شاه سرزمین نیگریان", power: 0, price: 500000 },
+    { id: 10, name: "ارتشبد سردار دوشنبه عابدی زاده کابلی", power: 0, price: 559000 },
+    { id: 11, name: "قطورعلی زحمت کش", power: 0, price: 720000 },
+    { id: 12, name: "نیگایی از انگلستان", power: 0, price: 926000 },
+    { id: 13, name: "نانای کننده ماهر", power: 0, price: 1285000 },
+    { id: 14, name: "یک مرد خاورمیانه ای(حتی مقاوم در برابر اتم)", power: 0, price: 1469000 }
 ];
 
 /* ====== کارت ها ======== */
@@ -567,7 +572,7 @@ const nftDatabase = {
         { name: "قانع اِیر لاین", price: 60000, colorClass: "lvl-2", typeName: "پدرام صفاری", img: "ghaneair.jpg" }
     ],
     "blue": [
-        { name: "هَل هُوَ جُندی؟", price: 18000, colorClass: "lvl-3", typeName: "نظام الحسینی", img: "etiadpzskian.png" },
+        { name: "هَل هُوَ جُندی؟", price: 18000, colorClass: "lvl-3", typeName: "دولت خوب و عالی", img: "etiadpzskian.png" },
         { name: "موزه داری نوین", price: 35000, colorClass: "lvl-3", typeName: "شیخ نَیاءیی", img: "dehghanmozeh.jpg" },
         { name: "مخترع مناطق کتک خورده", price: 45000, colorClass: "lvl-3", typeName: "پدرامی", img: "basiratianbargh.jpg" }
     ],
@@ -584,65 +589,66 @@ const nftDatabase = {
         { name: "کادیلاک تصادفی 480تا کار درها تمام رنگ", price: 30000, colorClass: "lvl-5", typeName: "صفاری", img: "hasanalishad.jpg" }
     ],
     "red": [
-        { name: "", price: 45000, colorClass: "lvl-6", typeName: "701 is the best", img: "" },
-        { name: "", price: 65000, colorClass: "lvl-6", typeName: "701 is the best", img: "" },
-        { name: "", price: 90000, colorClass: "lvl-6", typeName: "سگ سیبیلی", img: "" }
+        { name: "گلزارو اذیت نکنین", price: 45000, colorClass: "lvl-6", typeName: "701 is the best", img: "" },
+        { name: "غللام سیاه پوست نادان", price: 65000, colorClass: "lvl-6", typeName: "701 is the best", img: "" },
+        { name: "حسنی نگو بلا بگو", price: 90000, colorClass: "lvl-6", typeName: "سگ سیبیلی", img: "" }
     ],
     "neon": [
-        { name: "", price: 150000, colorClass: "lvl-7", typeName: "صولتی", img: "" },
-        { name: "", price: 220000, colorClass: "lvl-7", typeName: "صولتی مایل به صولتی", img: "" },
-        { name: "", price: 250000, colorClass: "lvl-7", typeName: "به شدت صولتی", img: "" }
+        { name: "نرو مریم میدونی عاشق ...تم", price: 150000, colorClass: "lvl-7", typeName: "صولتی", img: "" },
+        { name: "اواز خر در چمن", price: 220000, colorClass: "lvl-7", typeName: "صولتی مایل به صولتی", img: "" },
+        { name: "سیکتیر بهت عزیزم🖕", price: 250000, colorClass: "lvl-7", typeName: "به شدت صولتی", img: "" }
     ],
     "neon2": [
-        { name: "", price: 300000, colorClass: "lvl-8", typeName: "ارباب شهر من پوله!", img: "" },
-        { name: "", price: 340000, colorClass: "lvl-8", typeName: "ارباب شهر من پوله!", img: "" },
-        { name: "", price: 120000, colorClass: "lvl-8", typeName: "رفت تو پاچه ات", img: "" },
-        { name: "", price: 120000, colorClass: "lvl-8", typeName: "رفت تو پاچه ات", img: "" }
+        { name: "چیپس موخوری مامانم", price: 300000, colorClass: "lvl-8", typeName: "ارباب شهر من پوله!", img: "" },
+        { name: "پاشو پاشو بیا نانای کن", price: 340000, colorClass: "lvl-8", typeName: "ارباب شهر من پوله!", img: "" },
+        { name: "بهم گذا بده سوسیس", price: 120000, colorClass: "lvl-8", typeName: "رفت تو پاچه ات", img: "" },
+        { name: "ناله ی مرغ سحر", price: 120000, colorClass: "lvl-8", typeName: "رفت تو پاچه ات", img: "" }
     ],
     "neonplus": [
-        { name: "", price: 15000, colorClass: "lvl-9", typeName: "تا دسته تو پاچه ات", img: "" },
-        { name: "", price: 15000, colorClass: "lvl-9", typeName: "تا دسته تو پاچه ات", img: "" },
-        { name: "", price: 15000, colorClass: "lvl-9", typeName: "تا دسته تو پاچه ات", img: "" },
-        { name: "", price: 220000, colorClass: "lvl-9", typeName: "دلنشین نیس ولی خب", img: "" },
-        { name: "", price: 400000, colorClass: "lvl-9", typeName: "ارباب شهر من پوله!", img: "" }
+        { name: "یه سیکتیر نئونی🖕", price: 15000, colorClass: "lvl-9", typeName: "تا دسته تو پاچه ات", img: "" },
+        { name: "حالا گودرت شیشه", price: 15000, colorClass: "lvl-9", typeName: "تا دسته تو پاچه ات", img: "" },
+        { name: "Niga run نگران", price: 15000, colorClass: "lvl-9", typeName: "تا دسته تو پاچه ات", img: "" },
+        { name: "mr.26 ki..m", price: 220000, colorClass: "lvl-9", typeName: "دلنشین نیس ولی خب", img: "" },
+        { name: "money money money!", price: 400000, colorClass: "lvl-9", typeName: "ارباب شهر من پوله!", img: "" }
     ]
 };
 
+// ======مناطق یا همون هیوبلاهای سابق :)=====
 const monsters = [
     { 
         lvl: 1, name: "حرمسرای شیمیایی", tickets: 1, reqHeroes: 1, colorClass: "lvl-1", colorName: "دور رنگ", coinsReward: 30,
         lootTable: [ { rarity: "grey", chance: 100 } ] 
     },
     { 
-        lvl: 2, name: "مرده شور خانه خندان", tickets: 3, reqHeroes: 1, colorClass: "lvl-2", colorName: "چیزی نیس فقط پنج کف دست رنگ", coinsReward: 60,
+        lvl: 2, name: "مرده شور خانه خندان", tickets: 3, reqHeroes: 2, colorClass: "lvl-2", colorName: "چیزی نیس فقط پنج کف دست رنگ", coinsReward: 60,
         lootTable: [ { rarity: "grey", chance: 80 }, { rarity: "green", chance: 20 } ] 
     },
     { 
-        lvl: 3, name: "پادگان شهیدان مزیدی", tickets: 5, reqHeroes: 2, colorClass: "lvl-3", colorName: "صورتی مایل به صورتی", coinsReward: 100,
+        lvl: 3, name: "پادگان شهیدان مزیدی", tickets: 5, reqHeroes: 4, colorClass: "lvl-3", colorName: "صورتی مایل به صورتی", coinsReward: 100,
         lootTable: [ { rarity: "grey", chance: 50 }, { rarity: "green", chance: 35 }, { rarity: "blue", chance: 15 } ] 
     },
     { 
-        lvl: 4, name: "صفار سیتی دریایی", tickets: 7, reqHeroes: 3, colorClass: "lvl-4", colorName: "سیاه پر رنگ", coinsReward: 200,
+        lvl: 4, name: "صفار سیتی دریایی", tickets: 7, reqHeroes: 6, colorClass: "lvl-4", colorName: "سیاه پر رنگ", coinsReward: 200,
         lootTable: [ { rarity: "green", chance: 50 }, { rarity: "blue", chance: 35 }, { rarity: "purple", chance: 15 } ] 
     },
     { 
-        lvl: 5, name: "گی خانه یزید ابن معاویه", tickets: 8, reqHeroes: 4, colorClass: "lvl-5", colorName: "گلگیر و کاپوت تمام رنگ", coinsReward: 450,
+        lvl: 5, name: "گی خانه یزید ابن معاویه", tickets: 8, reqHeroes: 8, colorClass: "lvl-5", colorName: "گلگیر و کاپوت تمام رنگ", coinsReward: 450,
         lootTable: [ { rarity: "blue", chance: 50 }, { rarity: "purple", chance: 35 }, { rarity: "yellow", chance: 15 } ] 
     },
     { 
-        lvl: 6, name: "خیاطی فدادون بشم", tickets: 9, reqHeroes: 5, colorClass: "lvl-6", colorName: "سبز مایل به قرمز آسمانی", coinsReward: 500,
+        lvl: 6, name: "خیاطی فدادون بشم", tickets: 9, reqHeroes: 10, colorClass: "lvl-6", colorName: "سبز مایل به قرمز آسمانی", coinsReward: 500,
         lootTable: [ { rarity: "purple", chance: 50 }, { rarity: "yellow", chance: 35 }, { rarity: "red", chance: 15 } ] 
     },
     { 
-        lvl: 7, name: "آسمان 26 اُم", tickets: 13, reqHeroes: 5, colorClass: "lvl-7", colorName: "پراید ایران خودرویی نوک مدادی تمام رنگ", coinsReward: 1000,
+        lvl: 7, name: "آسمان 26 اُم", tickets: 13, reqHeroes: 11, colorClass: "lvl-7", colorName: "پراید ایران خودرویی نوک مدادی تمام رنگ", coinsReward: 1000,
         lootTable: [ { rarity: "purple", chance: 40 }, { rarity: "red", chance: 45 }, { rarity: "neon", chance: 15 } ] 
     },
     { 
-        lvl: 8, name: "بهشتی در جهنم دره", tickets: 15, reqHeroes: 7, colorClass: "lvl-8", colorName: "به رنگ شیشه", coinsReward: 1100,
+        lvl: 8, name: "بهشتی در جهنم دره", tickets: 15, reqHeroes: 12, colorClass: "lvl-8", colorName: "به رنگ شیشه", coinsReward: 1100,
         lootTable: [ { rarity: "red", chance: 25 }, { rarity: "neon", chance: 45 }, { rarity: "neon2", chance: 20 } ] 
     },
     { 
-        lvl: 9, name: "بانک مرکزی نیگراباد", tickets: 18, reqHeroes: 9, colorClass: "lvl-9", colorName: "به رنگ رنگین کمان", coinsReward: 1200,
+        lvl: 9, name: "بانک مرکزی نیگراباد", tickets: 18, reqHeroes: 13, colorClass: "lvl-9", colorName: "به رنگ رنگین کمان", coinsReward: 1200,
         lootTable: [ { rarity: "neon", chance: 45 }, { rarity: "neon2", chance: 40 }, { rarity: "neonplus", chance: 15 } ] 
     }
 ];
@@ -931,7 +937,7 @@ function renderMonsters(){
         const box = document.createElement("div");
         box.className = `monsterCard ${m.colorClass}`;
         box.innerHTML = `
-            <h3 style="margin-bottom:4px;">👹 ${m.name} ${m.lvl}</h3>
+            <h3 style="margin-bottom:4px;">👹 ${m.name} (${m.lvl})</h3>
             <div style="font-size:12px; margin-bottom:4px;">رنگ: <strong>${m.colorName}</strong></div>
             <div style="font-size:12px; color:#ff9800; margin-bottom:4px;">🦸 قهرمان مورد نیاز: حداقل ${m.reqHeroes} قهرمان</div>
             <div style="font-size:12px; color:#ffd700;">🎟️ پاپت مورد نیاز: ${m.tickets}</div>
@@ -1027,7 +1033,7 @@ window.sellNFT = async function(instanceId){
     const listing = {
         sellerId: playerId,
         sellerName: playerName || "بازیکن ناشناس",
-        name: sold.name || "کارت بدون نام",
+        name: sold.name || "امان از گشادی",
         price: Number(sold.price) || 0,
         colorClass: sold.colorClass || "lvl-1",
         typeName: sold.typeName || "",
