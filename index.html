@@ -296,7 +296,7 @@ button.actionBtn:disabled{ background:#555; box-shadow:none; cursor:not-allowed;
 }
 
 .casinoBoxModal {
-    background: linear-gradient(135deg, #2b0000, #4a0e0e);
+    background: linear-gradient(135deg, #8b0808, #12114d);
     border: 2px solid #ff4444;
     border-radius: 20px;
     padding: 20px;
@@ -307,14 +307,14 @@ button.actionBtn:disabled{ background:#555; box-shadow:none; cursor:not-allowed;
 
 #closeCasinoBtn {
     position: absolute; top: 10px; right: 15px;
-    background: transparent; border: none; font-size: 18px; color: white; cursor: pointer;
+    background: transparent; border: none; font-size: 13px; color: white; cursor: pointer;
 }
 
-.casino-display { font-size: 32px; background: #111; padding: 8px; border-radius: 10px; margin: 10px 0; border: 1px dashed #ff9800; }
+.casino-display { font-size: 32px; background: #000000; padding: 8px; border-radius: 10px; margin: 10px 0; border: 1px dashed #ff9800; }
 .casino-input { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #555; background: #111; color: #fff; text-align: center; margin-bottom: 8px; font-weight:bold; }
 
-#progressBar{ height:10px; background:#555; border-radius:10px; overflow:hidden; margin-top:4px; }
-#progressFill{ height:100%; width:0%; background:#4caf50; transition:.3s; }
+#progressBar{ height:10px; background:#2b2a2a; border-radius:10px; overflow:hidden; margin-top:4px; }
+#progressFill{ height:100%; width:0%; background:#1bc220; transition:.3s; }
 
 /* ================= بازار آنلاین ================= */
 .marketTop{display:flex;gap:6px;margin-bottom:10px}
@@ -329,24 +329,6 @@ button.actionBtn:disabled{ background:#555; box-shadow:none; cursor:not-allowed;
 
 </style>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSyBlrb9xE--CvlqCINxJIy75u6n3f6_eaH4",
-  authDomain: "clicker-5eaed.firebaseapp.com",
-  databaseURL: "https://clicker-5eaed-default-rtdb.firebaseio.com",
-  projectId: "clicker-5eaed",
-  storageBucket: "clicker-5eaed.firebasestorage.app",
-  messagingSenderId: "461109787796",
-  appId: "1:461109787796:web:6ec86e263712911b4a8881"
-};
-
-firebase.initializeApp(firebaseConfig);
-</script>
-
 </head>
 
 <body>
@@ -355,9 +337,9 @@ firebase.initializeApp(firebaseConfig);
 
 <div id="casinoModal">
     <div class="casinoBoxModal">
-        <button id="closeCasinoBtn">❌</button>
-        <h3 style="color:#ffb300">🎰 کازینو و ریسک</h3>  
-        <div class="casino-display" id="casinoSlots">🎰 🎰 🎰</div>  
+        <button id="closeCasinoBtn">سیکتو بزن</button>
+        <h3 style="color:#ffb300">ریسک کن مرد 💋</h3>  
+        <div class="casino-display" id="casinoSlots">#تف_تو_ریسک</div>  
         <input type="number" id="betAmount" class="casino-input" placeholder="مبلغ شرط (۱,۰۰۰ تا ۱,۰۰۰,۰۰۰)">  
         <button id="spinCasinoBtn" class="actionBtn" style="background: linear-gradient(45deg, #e65100, #ff9800);">🎲 چرخش گردونه!</button>  
         <div id="casinoResult" style="font-size:12px; margin-top:10px; color:#ffd700; font-weight:bold; min-height:18px;"></div>  
@@ -506,6 +488,133 @@ firebase.initializeApp(firebaseConfig);
 </div>
 
 <script>
+
+// =====================================================
+// ☁️ Cloudflare Worker - clicker-701
+// =====================================================
+
+const CLOUD_API =
+    "https://clicker-701.arashbashavard824.workers.dev";
+
+    window.cloudSaveVersion =
+    Number(localStorage.getItem("clicker701_save_version")) || 0;
+
+// شناسه بازیکن
+let cloudPlayerId = localStorage.getItem("clicker701_player_id");
+
+if (!cloudPlayerId) {
+    cloudPlayerId =
+        crypto.randomUUID();
+
+    localStorage.setItem(
+        "clicker701_player_id",
+        cloudPlayerId
+    );
+}
+
+// =====================================================
+// ارسال اطلاعات به Cloudflare
+// =====================================================
+
+async function cloudSaveGame(saveData) {
+
+    const response = await fetch(
+        CLOUD_API + "/api/save",
+        {
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                playerId: cloudPlayerId,
+                version: window.cloudSaveVersion || 0,
+                save: saveData
+            })
+        }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || !result.ok) {
+
+        // نسخه سرور جدیدتر است
+        if(
+            response.status === 409 &&
+            result.serverVersion !== undefined
+        ){
+
+            window.cloudSaveVersion =
+                Number(result.serverVersion) || 0;
+
+            localStorage.setItem(
+                "clicker701_save_version",
+                window.cloudSaveVersion
+            );
+        }
+
+        throw new Error(
+            result.error || "ذخیره روی سرور انجام نشد."
+        );
+    }
+
+    window.cloudSaveVersion =
+        Number(result.version) || 0;
+
+    localStorage.setItem(
+        "clicker701_save_version",
+        window.cloudSaveVersion
+    );
+
+    return result;
+}
+
+
+// =====================================================
+// دریافت اطلاعات از Cloudflare
+// =====================================================
+
+async function cloudLoadGame() {
+
+    const response = await fetch(
+        CLOUD_API +
+        "/api/load?playerId=" +
+        encodeURIComponent(cloudPlayerId)
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || !result.ok) {
+        throw new Error(
+            result.error || "لود بازی انجام نشد."
+        );
+    }
+
+if (!result.found) {
+
+    window.cloudSaveVersion = 0;
+
+    localStorage.setItem(
+        "clicker701_save_version",
+        "0"
+    );
+
+    return null;
+}
+
+window.cloudSaveVersion =
+    Number(result.version) || 0;
+
+localStorage.setItem(
+    "clicker701_save_version",
+    window.cloudSaveVersion
+);
+
+return result.save;
+
+}
+
 /* ==================================================
    متغیرها و وضعیت بازی
 ================================================== */
@@ -525,7 +634,6 @@ let myNFTs = [];
 
 // ================= بازار آنلاین =================
 
-let firebaseReady = false, marketRef = null, playerRef = null, playerId = null;
 let playerName = "بازیکن ناشناس", marketItemsCache = {};
 
 
@@ -1022,35 +1130,79 @@ function renderCollection(){
 }
 
 window.sellNFT = async function(instanceId){
-    const index = myNFTs.findIndex(n => n.instanceId === instanceId);
-    if(index === -1) return;
-    if(!firebaseReady || !playerId){
-        showError("⚠️ بازار آنلاین هنوز متصل نشده است!");
+
+    const nft = myNFTs.find(
+        x => String(x.instanceId) === String(instanceId)
+    );
+
+    const price = Math.floor(Number(nft.price) || 0);
+
+    if(price <= 0){
+        showError("❌ جیگر قیمت کارت درست نیست.");
         return;
     }
 
-    const sold = myNFTs[index];
-    const listing = {
-        sellerId: playerId,
-        sellerName: playerName || "بازیکن ناشناس",
-        name: sold.name || "امان از گشادی",
-        price: Number(sold.price) || 0,
-        colorClass: sold.colorClass || "lvl-1",
-        typeName: sold.typeName || "",
-        img: sold.img || "",
-        originalInstanceId: String(sold.instanceId),
-        createdAt: firebase.database.ServerValue.TIMESTAMP
-    };
-
     try{
-        await marketRef.push(listing);
-        myNFTs.splice(index, 1);
-        updateUI(); renderCollection(); saveGame();
-        playSound(1000, 0.08);
-        showError("✅ کارت با موفقیت وارد بازار شد!");
-    }catch(err){
-        console.error(err);
-        showError("❌ قرار دادن کارت در بازار ناموفق بود.");
+
+        const response = await fetch(
+            CLOUD_API + "/api/market/sell",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    playerId: cloudPlayerId,
+                    instanceId: instanceId
+                })
+            }
+        );
+
+        const result = await response.json();
+
+        if(!response.ok || !result.ok){
+
+            showError(
+                result.error || "❌ فروش کارت با موفقیت انجام نشد."
+            );
+
+            await loadCloudMarket();
+            return;
+        }
+
+        if(result.version !== undefined){
+            window.cloudSaveVersion =
+                Number(result.version) || 0;
+        }
+
+        /*
+         * اطلاعات جدید بازیکن را از Cloudflare می‌گیریم.
+         */
+        const loaded = await cloudLoadGame();
+
+        if(!loaded){
+            showError(
+                "⚠️ کارت در بازار قرار گرفت، اما دریافت اطلاعات جدید با موفقیت ناموفق بود."
+            );
+            await loadCloudMarket();
+            return;
+        }
+
+        updateUI();
+        renderCollection();
+
+        await loadCloudMarket();
+
+        showError("✅ کارت با موفقیت در بازار قرار گرفت.");
+
+    }catch(error){
+
+        console.error(error);
+
+        showError(
+            "❌ ارتباط با سرورامون با موفقیت نا موفق بود."
+        );
+
     }
 };
 
@@ -1182,74 +1334,173 @@ document.getElementById("spinCasinoBtn").onclick = () => {
 };
 
 
-/* ==================================================
-   بازار آنلاین
-   ================================================== */
-function initFirebaseMarket(){
+// ==================================================
+// ☁️ بازار آنلاین Cloudflare
+// ==================================================
+
+async function loadCloudMarket(){
+
     try{
-        if(firebaseConfig.apiKey === "YOUR_API_KEY"){
-            document.getElementById("marketStatus").innerText =
-                "⚠️";
-            return;
+
+        const response = await fetch(
+            CLOUD_API + "/api/market"
+        );
+
+        const result = await response.json();
+
+        if(!response.ok || !result.ok){
+            throw new Error(
+                result.error ||
+                "دریافت بازار ناموفق بود."
+            );
         }
-        if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 
-        firebase.auth().signInAnonymously().then(result => {
-            playerId = result.user.uid;
-            firebaseReady = true;
-            marketRef = firebase.database().ref("market");
-            playerRef = firebase.database().ref("players/" + playerId);
+        // تبدیل آرایه بازار به object
+        // تا renderMarket فعلی بتواند از آن استفاده کند
+        marketItemsCache = {};
 
-            playerRef.child("name").once("value").then(snap => {
-                playerName = snap.val() || "بازیکن " + playerId.slice(0,6);
-                document.getElementById("playerNameInput").value = playerName;
-                updateMarketStatus();
-            });
+        (result.items || []).forEach(item => {
 
-            marketRef.on("value", snap => {
-                marketItemsCache = snap.val() || {};
-                renderMarket();
-            });
-            updateMarketStatus();
-            listenForPendingCoins();
-        }).catch(err => {
-            console.error(err);
-            document.getElementById("marketStatus").innerText = "❌ اتصال به بازار برقرار نشد.";
+            marketItemsCache[item.id] = {
+                sellerId: item.sellerId,
+                sellerName: item.sellerName,
+
+                name: item.name,
+                price: Number(item.price) || 0,
+
+                colorClass:
+                    item.colorClass || "lvl-1",
+
+                typeName:
+                    item.typeName || "",
+
+                img:
+                    item.img || "",
+
+                originalInstanceId:
+                    item.originalInstanceId || "",
+
+                createdAt:
+                    Number(item.createdAt) || 0
+            };
+
         });
-    }catch(err){
-        console.error(err);
-        document.getElementById("marketStatus").innerText = "❌ تنظیمات Firebase مشکل دارد.";
+
+        renderMarket();
+
+        updateMarketStatus();
+
+    }catch(error){
+
+        console.error(error);
+
+        const status =
+            document.getElementById("marketStatus");
+
+        if(status){
+
+            status.innerText =
+                "❌ اتصال به بازار با موفقیت برقرار نشد.";
+
+            status.style.color = "#ff5252";
+        }
     }
 }
+
+
+// ==================================================
+// وضعیت بازار
+// ==================================================
 
 function updateMarketStatus(){
-    const el = document.getElementById("marketStatus");
-    if(firebaseReady && el){
-        el.innerText = "🟢 آنلاین | نام شما: " + (playerName || "بازیکن ناشناس");
-        el.style.color = "#00ff9d";
-    }
+
+    const el =
+        document.getElementById("marketStatus");
+
+    if(!el) return;
+
+    el.innerText =
+        "🟢 آنلاین | نام شما: " +
+        (playerName || "بازیکن ناشناس");
+
+    el.style.color = "#00ff9d";
 }
 
-document.getElementById("savePlayerNameBtn").onclick = async () => {
-    if(!firebaseReady || !playerRef){
-        showError("⚠️ ابتدا اتصال بازار را برقرار کنید.");
+
+// ==================================================
+// ثبت نام بازیکن
+// ==================================================
+
+document.getElementById(
+    "savePlayerNameBtn"
+).onclick = async () => {
+
+    const input =
+        document.getElementById(
+            "playerNameInput"
+        );
+
+    const newName =
+        (input.value || "")
+        .trim()
+        .replace(/[<>]/g, "");
+
+    if(newName.length < 2){
+
+        showError(
+            "⚠️ نام باید حداقل ۲ حرف باشد."
+        );
+
         return;
     }
+
+    playerName =
+        newName.slice(0, 20);
+
+    try{
+
+        // نام داخل Save بازیکن قرار می‌گیرد
+        // و روی Cloudflare ذخیره می‌شود
+        await saveGame();
+
+        updateMarketStatus();
+
+        await loadCloudMarket();
+
+        showError(
+            "✅ نام بازیکن ثبت شد!"
+        );
+
+    }catch(error){
+
+        console.error(error);
+
+        showError(
+            "❌ ذخیره نام با موفقیت شکست خورد."
+        );
+    }
+};
+
+document.getElementById("savePlayerNameBtn").onclick = async () => {
+
     const input = document.getElementById("playerNameInput");
-    const newName = (input.value || "").trim().replace(/[<>]/g, "");
-    if(newName.length < 2){
+
+    const newName = (input.value || "")
+        .trim()
+        .replace(/[<>]/g, "");
+
+    if (newName.length < 2) {
         showError("⚠️ نام باید حداقل ۲ حرف باشد.");
         return;
     }
-    playerName = newName.slice(0,20);
-    try{
-        await playerRef.update({name: playerName});
-        updateMarketStatus();
-        showError("✅ نام بازیکن ثبت شد!");
-    }catch(err){
-        console.error(err);
-        showError("❌ ذخیره نام انجام نشد.");
-    }
+
+    playerName = newName.slice(0, 20);
+
+    await saveGame();
+
+    updateMarketStatus();
+
+    showError("✅ نام بازیکن ثبت شد!");
 };
 
 function marketCardHTML(item, id, isMine){
@@ -1282,8 +1533,13 @@ function renderMarket(){
     if(!list || !mine) return;
 
     const entries = Object.entries(marketItemsCache || {});
-    const others = entries.filter(([id,item]) => item && item.sellerId !== playerId);
-    const mineEntries = entries.filter(([id,item]) => item && item.sellerId === playerId);
+    const others = entries.filter(([id,item]) =>
+    item && item.sellerId !== cloudPlayerId
+    );
+
+    const mineEntries = entries.filter(([id,item]) =>
+    item && item.sellerId === cloudPlayerId
+    );
 
     list.innerHTML = others.length
         ? others.map(([id,item]) => marketCardHTML(item,id,false)).join("")
@@ -1295,98 +1551,187 @@ function renderMarket(){
 }
 
 window.cancelMarketListing = async function(id){
-    if(!firebaseReady || !marketRef) return;
+
     const item = marketItemsCache[id];
-    if(!item || item.sellerId !== playerId) return;
+
+    if(!item){
+        showError("❌ این کارت دیگر در بازار نیست.");
+        await loadCloudMarket();
+        return;
+    }
+
+    if(item.sellerId !== cloudPlayerId){
+        showError("❌ این کارت متعلق به تو نیست.");
+        return;
+    }
 
     try{
-        await marketRef.child(id).remove();
-        myNFTs.push({
-            name:item.name, price:Number(item.price)||0,
-            colorClass:item.colorClass||"lvl-1", typeName:item.typeName||"",
-            img:item.img||"", instanceId:item.originalInstanceId || (Date.now()+Math.random())
-        });
-        saveGame(); updateUI(); renderCollection(); renderMarket();
+
+        const response = await fetch(
+            CLOUD_API + "/api/market/cancel",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    playerId: cloudPlayerId,
+                    listingId: id
+                })
+            }
+        );
+
+        const result = await response.json();
+
+        if(!response.ok || !result.ok){
+
+            showError(
+                result.error || "❌ برداشتن کارت با موفقیت انجام نشد."
+            );
+
+            await loadCloudMarket();
+            return;
+        }
+
+        if(result.version !== undefined){
+            window.cloudSaveVersion =
+                Number(result.version) || 0;
+        }
+
+        /*
+         * بعد از برداشتن کارت،
+         * اطلاعات واقعی بازیکن را از Cloudflare می‌گیریم.
+         */
+        const loaded = await cloudLoadGame();
+
+        if(!loaded){
+            showError(
+                "⚠️ کارت برداشته شد، اما دریافت اطلاعات جدید با موفقیت ناموفق بود."
+            );
+            await loadCloudMarket();
+            return;
+        }
+
+        updateUI();
+        renderCollection();
+
+        await loadCloudMarket();
+
         showError("✅ کارت از بازار برداشته شد.");
-    }catch(err){
-        console.error(err);
-        showError("❌ برداشتن کارت ناموفق بود.");
+
+    }catch(error){
+
+        console.error(error);
+
+        showError(
+            "❌ ارتباط با سرورامون با موفقیت برقرار نشد."
+        );
+
     }
 };
 
 window.buyMarketCard = async function(id){
-    if(!firebaseReady || !marketRef || !playerId){
-        showError("⚠️ بازار آنلاین متصل نیست.");
+
+    const item = marketItemsCache[id];
+
+    if(!item){
+        showError("⚠️ این کارت دیگر در بازار موجود نیست.");
+        await loadCloudMarket();
         return;
     }
 
-    const itemRef = marketRef.child(id);
+    if(item.sellerId === cloudPlayerId){
+        showError("⚠️ داداش میخوای کارت خودتو بخری؟!");
+        return;
+    }
+
+    const price = Math.floor(Number(item.price) || 0);
+
+    if(price <= 0){
+        showError("❌ قیمت کارت مشکل داره داداش!");
+        return;
+    }
+
+    if(coins < price){
+        showError("⚠️ سکه کافی نداری.");
+        return;
+    }
+
     try{
-        const result = await itemRef.transaction(current => {
-if(current === null) return;
 
-if(current.sellerId === playerId){
-    return;
-}
+        const response = await fetch(
+            CLOUD_API + "/api/market/buy",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    playerId: cloudPlayerId,
+                    listingId: id
+                })
+            }
+        );
 
-if(coins < Number(current.price)){
-    return;
-}
+        const result = await response.json();
 
-return {
-    ...current,
-    sold:true,
-    buyerId:playerId
-};
-        });
+        // خرید ناموفق
+        if(!response.ok || !result.ok){
 
-        if(!result.committed){
-            showError("⚠️ کارت قبلاً خریداری شده یا سکه کافی نداری.");
+            if(result.code === "PURCHASE_CONFLICT"){
+                showError(
+                    "⚠️ این کارت دقیقا همین لحظه توسط بازیکن دیگری خریداری شد!"
+                );
+            }else{
+                showError(
+                    result.error || "❌ خرید کارت انجام نشد."
+                );
+            }
+
+            await loadCloudMarket();
             return;
         }
 
-        const sold = result.snapshot.val();
-        const price = Number(sold.price) || 0;
+        /*
+         * خرید با موفقیت روی Cloudflare انجام شده.
+         * نسخه جدید Save خریدار را نگه می‌داریم.
+         */
+        if(result.buyerVersion !== undefined){
+            window.cloudSaveVersion =
+                Number(result.buyerVersion) || 0;
+        }
 
-        coins -= price;
-        myNFTs.push({
-            name:sold.name, price:price,
-            colorClass:sold.colorClass||"lvl-1", typeName:sold.typeName||"",
-            img:sold.img||"", instanceId:Date.now()+Math.random()
-        });
+        /*
+         * بعد از خرید، Save واقعی را از Cloudflare می‌گیریم.
+         * بنابراین سکه و کلکسیون از اطلاعات سرور می‌آیند.
+         */
+        const loaded = await cloudLoadGame();
 
-const sellerRef = firebase.database().ref("players/" + sold.sellerId + "/pendingCoins");
-await sellerRef.transaction(v => (Number(v)||0) + price);
+        if(!loaded){
+            showError(
+                "⚠️ خرید انجام شد، اما دریافت اطلاعات جدید ناموفق بود."
+            );
+            await loadCloudMarket();
+            return;
+        }
 
-// حذف کارت از بازار بعد از خرید
-await itemRef.remove();
+        updateUI();
+        renderCollection();
 
-saveGame(); 
-updateUI(); 
-renderCollection(); 
-renderMarket();
+        await loadCloudMarket();
 
-playSound(1200,0.08);
+        showError("✅ کارت با موفقیت خریداری شد.");
 
-alert(`🎉 خرید موفق!\nکارت «${sold.name}» به کلکسیون شما اضافه شد.\n💰 مبلغ: ${price.toLocaleString()} سکه`);
-    }catch(err){
-        console.error(err);
-        showError("❌ خرید کارت انجام نشد.");
+    }catch(error){
+
+        console.error(error);
+
+        showError(
+            "❌ ارتباط با سرورامون برقرار نشد."
+        );
+
     }
 };
-
-function listenForPendingCoins(){
-    if(!playerRef) return;
-    playerRef.child("pendingCoins").on("value", async snap => {
-        const amount = Number(snap.val()) || 0;
-        if(amount <= 0) return;
-        coins += amount;
-        totalCoinsEarned += amount;
-        await playerRef.child("pendingCoins").set(0);
-        updateUI(); saveGame();
-        showError(`💰 ${amount.toLocaleString()} سکه از فروش کارت دریافت کردی!`);
-    });
-}
 
 /* ==================================================
    ذخیره و بارگذاری
@@ -1419,12 +1764,6 @@ function loadGame(){
         maxTicketPrice = d.maxTicketPrice || 25000; ticketSpeedPrice = d.ticketSpeedPrice || 40000;
     }
 }
-if(maxWarTickets === 10){
-    let maxWarTickets = 5;
-}
-if(warTickets >= 5){
-    let warTickets = 5;
-}
 
 document.getElementById("saveBtn").onclick = () => { saveGame(); alert("بازی ذخیره شد."); };
 document.getElementById("resetBtn").onclick = () => { if(confirm("ایا مطمئنی؟ همه دستاورد ها و پیشرفت ها پاک میشوند!")){ localStorage.clear(); location.reload(); }};
@@ -1444,14 +1783,24 @@ document.getElementById("importBtn").onclick = () => {
 };
 
 /* راه‌اندازی اولیه */
-loadGame();
-checkStage();
-renderHeroes();
-renderMonsters();
-updateWarTickets();
-updateUI();
-updateStats();
-initFirebaseMarket();
+(async function startGame(){
+
+    await loadGame();
+
+    checkStage();
+    renderHeroes();
+    renderMonsters();
+    updateWarTickets();
+    updateUI();
+    updateStats();
+
+    await loadCloudMarket();
+
+    document.getElementById(
+    "playerNameInput"
+    ).value = playerName || "";
+
+})();
 </script>
 </body>
 </html>
