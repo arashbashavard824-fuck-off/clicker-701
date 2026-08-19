@@ -373,7 +373,7 @@ button.actionBtn:disabled{ background:#555; box-shadow:none; cursor:not-allowed;
         </div>
         <div id="energyBar"><div id="energyFill"></div></div>
 
-        <img id="coin" src="ghane.jpg" alt="Coin">
+        <img id="coin" src="img1.jpg" alt="Coin">
 
         <div class="buyModeArea">
             <span>حالت خرید:</span>
@@ -575,44 +575,106 @@ async function cloudSaveGame(saveData) {
 // دریافت اطلاعات از Cloudflare
 // =====================================================
 
-async function cloudLoadGame() {
+async function loadCloudMarket(){
 
-    const response = await fetch(
-        CLOUD_API +
-        "/api/load?playerId=" +
-        encodeURIComponent(cloudPlayerId)
-    );
+    const status =
+        document.getElementById("marketStatus");
 
-    const result = await response.json();
+    try{
 
-    if (!response.ok || !result.ok) {
-        throw new Error(
-            result.error || "لود بازی انجام نشد."
+        if(status){
+            status.innerText =
+                "🟡 در حال اتصال به بازار...";
+            status.style.color = "#ffd600";
+        }
+
+        const response = await fetch(
+            CLOUD_API + "/api/market",
+            {
+                method: "GET",
+                cache: "no-store"
+            }
         );
+
+        const text =
+            await response.text();
+
+        let result;
+
+        try{
+            result = JSON.parse(text);
+        }catch{
+            throw new Error(
+                "پاسخ Worker JSON نیست: " +
+                text.slice(0,150)
+            );
+        }
+
+        if(!response.ok || !result.ok){
+
+            throw new Error(
+                result.error ||
+                "Worker خطا داد. HTTP " +
+                response.status
+            );
+        }
+
+        marketItemsCache = {};
+
+        (result.items || []).forEach(item => {
+
+            marketItemsCache[item.id] = {
+
+                sellerId:
+                    item.sellerId,
+
+                sellerName:
+                    item.sellerName,
+
+                name:
+                    item.name,
+
+                price:
+                    Number(item.price) || 0,
+
+                colorClass:
+                    item.colorClass || "lvl-1",
+
+                typeName:
+                    item.typeName || "",
+
+                img:
+                    item.img || "",
+
+                originalInstanceId:
+                    item.originalInstanceId || "",
+
+                createdAt:
+                    Number(item.createdAt) || 0
+            };
+        });
+
+        renderMarket();
+
+        updateMarketStatus(true);
+
+    }catch(error){
+
+        console.error(
+            "MARKET ERROR:",
+            error
+        );
+
+        if(status){
+
+            status.innerText =
+                "🔴 بازار: " +
+                error.message;
+
+            status.style.color =
+                "#ff5252";
+        }
     }
-
-if (!result.found) {
-
-    window.cloudSaveVersion = 0;
-
-    localStorage.setItem(
-        "clicker701_save_version",
-        "0"
-    );
-
-    return null;
-}
-
-window.cloudSaveVersion =
-    Number(result.version) || 0;
-
-localStorage.setItem(
-    "clicker701_save_version",
-    window.cloudSaveVersion
-);
-
-return result.save;
-
 }
 
 /* ==================================================
@@ -1131,19 +1193,21 @@ function renderCollection(){
 
 window.sellNFT = async function(instanceId){
 
-    const nft = myNFTs.find(
-        x => String(x.instanceId) === String(instanceId)
+    const index = myNFTs.findIndex(
+        n => String(n.instanceId) === String(instanceId)
     );
 
-    if(!nft){
-        showError("❌ این کارت اصن تو کلکسیونت وجود نداره.");
+    if(index === -1){
+        showError("❌ کارت در کلکسیون پیدا نشد.");
         return;
     }
+
+    const nft = myNFTs[index];
 
     const price = Math.floor(Number(nft.price) || 0);
 
     if(price <= 0){
-        showError("❌ جیگر قیمت کارت درست نیست.");
+        showError("❌ قیمت کارت معتبر نیست.");
         return;
     }
 
@@ -1153,12 +1217,29 @@ window.sellNFT = async function(instanceId){
             CLOUD_API + "/api/market/sell",
             {
                 method: "POST",
+
                 headers: {
                     "Content-Type": "application/json"
                 },
+
                 body: JSON.stringify({
+
                     playerId: cloudPlayerId,
-                    instanceId: instanceId
+
+                    sellerName:
+                        playerName || "بازیکن ناشناس",
+
+                    card: {
+                        name: nft.name || "کارت",
+                        price: price,
+                        colorClass: nft.colorClass || "lvl-1",
+                        typeName: nft.typeName || "",
+                        img: nft.img || "",
+                        originalInstanceId:
+                            String(nft.instanceId)
+                    },
+
+                    price: price
                 })
             }
         );
@@ -1168,46 +1249,35 @@ window.sellNFT = async function(instanceId){
         if(!response.ok || !result.ok){
 
             showError(
-                result.error || "❌ فروش کارت با موفقیت انجام نشد."
+                result.error ||
+                "❌ فروش کارت انجام نشد."
             );
 
             await loadCloudMarket();
             return;
         }
 
-        if(result.version !== undefined){
-            window.cloudSaveVersion =
-                Number(result.version) || 0;
-        }
+        // فقط بعد از تأیید سرور کارت از کلکسیون حذف شود
+        myNFTs.splice(index, 1);
 
-        /*
-         * اطلاعات جدید بازیکن را از Cloudflare می‌گیریم.
-         */
-        const loaded = await cloudLoadGame();
-
-        if(!loaded){
-            showError(
-                "⚠️ کارت در بازار قرار گرفت، اما دریافت اطلاعات جدید با موفقیت ناموفق بود."
-            );
-            await loadCloudMarket();
-            return;
-        }
+        saveGame();
 
         updateUI();
         renderCollection();
 
         await loadCloudMarket();
 
-        showError("✅ کارت با موفقیت در بازار قرار گرفت.");
+        showError(
+            "✅ کارت با موفقیت وارد بازار شد!"
+        );
 
     }catch(error){
 
         console.error(error);
 
         showError(
-            "❌ ارتباط با سرورامون با موفقیت نا موفق بود."
+            "❌ ارتباط با بازار برقرار نشد."
         );
-
     }
 };
 
@@ -1391,9 +1461,8 @@ async function loadCloudMarket(){
 
         });
 
-        renderMarket();
-
-        updateMarketStatus();
+renderMarket();
+updateMarketStatus(true);
 
     }catch(error){
 
@@ -1417,12 +1486,22 @@ async function loadCloudMarket(){
 // وضعیت بازار
 // ==================================================
 
-function updateMarketStatus(){
+function updateMarketStatus(online = false){
 
     const el =
         document.getElementById("marketStatus");
 
     if(!el) return;
+
+    if(!online){
+
+        el.innerText =
+            "🔴 بازار آفلاین است";
+
+        el.style.color = "#ff5252";
+
+        return;
+    }
 
     el.innerText =
         "🟢 آنلاین | نام شما: " +
@@ -1560,13 +1639,16 @@ window.cancelMarketListing = async function(id){
     const item = marketItemsCache[id];
 
     if(!item){
-        showError("❌ این کارت دیگر در بازار نیست.");
-        await loadCloudMarket();
+        showError(
+            "❌ کارت دیگر در بازار نیست."
+        );
         return;
     }
 
     if(item.sellerId !== cloudPlayerId){
-        showError("❌ این کارت متعلق به تو نیست.");
+        showError(
+            "❌ این کارت متعلق به شما نیست."
+        );
         return;
     }
 
@@ -1576,9 +1658,11 @@ window.cancelMarketListing = async function(id){
             CLOUD_API + "/api/market/cancel",
             {
                 method: "POST",
+
                 headers: {
                     "Content-Type": "application/json"
                 },
+
                 body: JSON.stringify({
                     playerId: cloudPlayerId,
                     listingId: id
@@ -1586,52 +1670,59 @@ window.cancelMarketListing = async function(id){
             }
         );
 
-        const result = await response.json();
+        const result =
+            await response.json();
 
         if(!response.ok || !result.ok){
 
             showError(
-                result.error || "❌ برداشتن کارت با موفقیت انجام نشد."
+                result.error ||
+                "❌ برداشتن کارت انجام نشد."
             );
 
-            await loadCloudMarket();
             return;
         }
 
-        if(result.version !== undefined){
-            window.cloudSaveVersion =
-                Number(result.version) || 0;
-        }
+        myNFTs.push({
 
-        /*
-         * بعد از برداشتن کارت،
-         * اطلاعات واقعی بازیکن را از Cloudflare می‌گیریم.
-         */
-        const loaded = await cloudLoadGame();
+            name:
+                item.name || "کارت",
 
-        if(!loaded){
-            showError(
-                "⚠️ کارت برداشته شد، اما دریافت اطلاعات جدید با موفقیت ناموفق بود."
-            );
-            await loadCloudMarket();
-            return;
-        }
+            price:
+                Number(item.price) || 0,
+
+            colorClass:
+                item.colorClass || "lvl-1",
+
+            typeName:
+                item.typeName || "",
+
+            img:
+                item.img || "",
+
+            instanceId:
+                item.originalInstanceId ||
+                crypto.randomUUID()
+        });
+
+        saveGame();
 
         updateUI();
         renderCollection();
 
         await loadCloudMarket();
 
-        showError("✅ کارت از بازار برداشته شد.");
+        showError(
+            "✅ کارت از بازار برداشته شد."
+        );
 
     }catch(error){
 
         console.error(error);
 
         showError(
-            "❌ ارتباط با سرورامون با موفقیت برقرار نشد."
+            "❌ ارتباط با بازار برقرار نشد."
         );
-
     }
 };
 
@@ -1640,20 +1731,26 @@ window.buyMarketCard = async function(id){
     const item = marketItemsCache[id];
 
     if(!item){
-        showError("⚠️ این کارت دیگر در بازار موجود نیست.");
+        showError(
+            "⚠️ این کارت دیگر در بازار موجود نیست."
+        );
+
         await loadCloudMarket();
         return;
     }
 
     if(item.sellerId === cloudPlayerId){
-        showError("⚠️ داداش میخوای کارت خودتو بخری؟!");
+        showError(
+            "⚠️ نمی‌توانی کارت خودت را بخری."
+        );
         return;
     }
 
-    const price = Math.floor(Number(item.price) || 0);
+    const price =
+        Math.floor(Number(item.price) || 0);
 
     if(price <= 0){
-        showError("❌ قیمت کارت مشکل داره داداش!");
+        showError("❌ قیمت کارت اشتباه است.");
         return;
     }
 
@@ -1668,9 +1765,11 @@ window.buyMarketCard = async function(id){
             CLOUD_API + "/api/market/buy",
             {
                 method: "POST",
+
                 headers: {
                     "Content-Type": "application/json"
                 },
+
                 body: JSON.stringify({
                     playerId: cloudPlayerId,
                     listingId: id
@@ -1678,18 +1777,25 @@ window.buyMarketCard = async function(id){
             }
         );
 
-        const result = await response.json();
+        const result =
+            await response.json();
 
-        // خرید ناموفق
         if(!response.ok || !result.ok){
 
-            if(result.code === "PURCHASE_CONFLICT"){
+            if(
+                result.code ===
+                "PURCHASE_CONFLICT"
+            ){
+
                 showError(
-                    "⚠️ این کارت دقیقا همین لحظه توسط بازیکن دیگری خریداری شد!"
+                    "⚠️ این کارت همزمان توسط بازیکن دیگری خریداری شد."
                 );
+
             }else{
+
                 showError(
-                    result.error || "❌ خرید کارت انجام نشد."
+                    result.error ||
+                    "❌ خرید کارت انجام نشد."
                 );
             }
 
@@ -1698,243 +1804,95 @@ window.buyMarketCard = async function(id){
         }
 
         /*
-         * خرید با موفقیت روی Cloudflare انجام شده.
-         * نسخه جدید Save خریدار را نگه می‌داریم.
+         * خرید توسط Cloudflare قطعی شد.
+         * حالا تغییرات بازی را محلی انجام می‌دهیم.
          */
-        if(result.buyerVersion !== undefined){
-            window.cloudSaveVersion =
-                Number(result.buyerVersion) || 0;
+
+        const finalPrice =
+            Number(result.price) || price;
+
+        coins -= finalPrice;
+
+        if(!Array.isArray(myNFTs)){
+            myNFTs = [];
         }
 
-        /*
-         * بعد از خرید، Save واقعی را از Cloudflare می‌گیریم.
-         * بنابراین سکه و کلکسیون از اطلاعات سرور می‌آیند.
-         */
-        const loaded = await cloudLoadGame();
+        myNFTs.push({
 
-        if(!loaded){
-            showError(
-                "⚠️ خرید انجام شد، اما دریافت اطلاعات جدید ناموفق بود."
-            );
-            await loadCloudMarket();
-            return;
-        }
+            name:
+                item.name || "کارت",
+
+            price:
+                finalPrice,
+
+            colorClass:
+                item.colorClass || "lvl-1",
+
+            typeName:
+                item.typeName || "",
+
+            img:
+                item.img || "",
+
+            instanceId:
+                crypto.randomUUID()
+        });
+
+        saveGame();
 
         updateUI();
+        updateStats();
         renderCollection();
 
         await loadCloudMarket();
 
-        showError("✅ کارت با موفقیت خریداری شد.");
+        showError(
+            "✅ کارت با موفقیت خریداری شد."
+        );
 
     }catch(error){
 
         console.error(error);
 
         showError(
-            "❌ ارتباط با سرورامون برقرار نشد."
+            "❌ ارتباط با بازار برقرار نشد."
         );
-
     }
 };
 
 /* ==================================================
    ذخیره و بارگذاری
 ================================================== */
-async function saveGame(){
-
-    const data = {
-        coins,
-        stage,
-        power,
-        energy,
-        maxEnergy,
-        regen,
-        powerPrice,
-        energyPrice,
-        regenPrice,
-        goldenChance,
-        goldenMultiplier,
-        goldenChancePrice,
-        goldenMultiPrice,
-        totalClicks,
-        totalCoinsEarned,
-        totalGoldenClicks,
-        ownedHeroes,
-        myNFTs,
-        warTickets,
-        maxWarTickets,
-        warTicketInterval,
-        lastWarTicketTime,
-        maxTicketPrice,
-        ticketSpeedPrice,
-        playerName
+function saveGame(){
+    const data = { 
+        coins, stage, power, energy, maxEnergy, regen, 
+        powerPrice, energyPrice, regenPrice, goldenChance, 
+        goldenMultiplier, goldenChancePrice, goldenMultiPrice,
+        totalClicks, totalCoinsEarned, totalGoldenClicks, 
+        ownedHeroes, myNFTs, warTickets, maxWarTickets, warTicketInterval, 
+        lastWarTicketTime, maxTicketPrice, ticketSpeedPrice 
     };
+    localStorage.setItem("CoinClickerSave", JSON.stringify(data));
+}
 
-    try {
-
-        await cloudSaveGame(data);
-
-        console.log("☁️ ذخیره موفق شد.");
-
-        return true;
-
-    } catch(error) {
-
-        console.error("Cloud Save Error:", error);
-
-        showError(
-            "❌ " + (error.message || "ذخیره روی سرور انجام نشد.")
-        );
-
-        return false;
+function loadGame(){
+    const saved = localStorage.getItem("CoinClickerSave");
+    if(saved){
+        const d = JSON.parse(saved);
+        coins = d.coins || 0; stage = d.stage || 1; power = d.power || 1;
+        energy = d.energy || 100; maxEnergy = d.maxEnergy || 100; regen = d.regen || 1;
+        powerPrice = d.powerPrice || 20; energyPrice = d.energyPrice || 40; regenPrice = d.regenPrice || 60;
+        goldenChance = d.goldenChance || 2; goldenMultiplier = d.goldenMultiplier || 5;
+        goldenChancePrice = d.goldenChancePrice || 150; goldenMultiPrice = d.goldenMultiPrice || 300;
+        totalClicks = d.totalClicks || 0; totalCoinsEarned = d.totalCoinsEarned || 0; totalGoldenClicks = d.totalGoldenClicks || 0;
+        ownedHeroes = d.ownedHeroes || []; myNFTs = d.myNFTs || []; warTickets = d.warTickets ?? 10;
+        maxWarTickets = d.maxWarTickets || 10; warTicketInterval = d.warTicketInterval || (10 * 60 * 1000);
+        lastWarTicketTime = d.lastWarTicketTime || Date.now();
+        maxTicketPrice = d.maxTicketPrice || 25000; ticketSpeedPrice = d.ticketSpeedPrice || 40000;
     }
 }
 
-async function loadGame(){
-
-    try {
-
-        const d = await cloudLoadGame();
-
-        // بازیکن هنوز روی سرور ذخیره‌ای ندارد
-        if(!d){
-
-            coins = 0;
-            stage = 1;
-            power = 1;
-
-            energy = 100;
-            maxEnergy = 100;
-            regen = 1;
-
-            powerPrice = 30;
-            energyPrice = 100;
-            regenPrice = 80;
-
-            goldenChance = 2;
-            goldenMultiplier = 5;
-
-            goldenChancePrice = 300;
-            goldenMultiPrice = 300;
-
-            totalClicks = 0;
-            totalCoinsEarned = 0;
-            totalGoldenClicks = 0;
-
-            ownedHeroes = [];
-            myNFTs = [];
-
-            warTickets = 5;
-            maxWarTickets = 5;
-            warTicketInterval = 10 * 60 * 1000;
-            lastWarTicketTime = Date.now();
-
-            maxTicketPrice = 25000;
-            ticketSpeedPrice = 100000;
-
-            playerName = "بازیکن ناشناس";
-
-            return;
-        }
-
-        // =========================
-        // اطلاعات بازیکن از سرور
-        // =========================
-
-        coins = Number(d.coins) || 0;
-        stage = Number(d.stage) || 1;
-        power = Number(d.power) || 1;
-
-        energy = Number(d.energy) || 100;
-        maxEnergy = Number(d.maxEnergy) || 100;
-        regen = Number(d.regen) || 1;
-
-        powerPrice = Number(d.powerPrice) || 30;
-        energyPrice = Number(d.energyPrice) || 100;
-        regenPrice = Number(d.regenPrice) || 80;
-
-        goldenChance = Number(d.goldenChance) || 2;
-        goldenMultiplier = Number(d.goldenMultiplier) || 5;
-
-        goldenChancePrice =
-            Number(d.goldenChancePrice) || 300;
-
-        goldenMultiPrice =
-            Number(d.goldenMultiPrice) || 300;
-
-        totalClicks =
-            Number(d.totalClicks) || 0;
-
-        totalCoinsEarned =
-            Number(d.totalCoinsEarned) || 0;
-
-        totalGoldenClicks =
-            Number(d.totalGoldenClicks) || 0;
-
-        ownedHeroes =
-            Array.isArray(d.ownedHeroes)
-            ? d.ownedHeroes
-            : [];
-
-        myNFTs =
-            Array.isArray(d.myNFTs)
-            ? d.myNFTs
-            : [];
-
-        warTickets =
-            Number(d.warTickets) || 5;
-
-        maxWarTickets =
-            Number(d.maxWarTickets) || 5;
-
-        warTicketInterval =
-            Number(d.warTicketInterval) ||
-            (10 * 60 * 1000);
-
-        lastWarTicketTime =
-            Number(d.lastWarTicketTime) ||
-            Date.now();
-
-        maxTicketPrice =
-            Number(d.maxTicketPrice) || 25000;
-
-        ticketSpeedPrice =
-            Number(d.ticketSpeedPrice) || 100000;
-
-        if(d.playerName){
-            playerName = String(d.playerName);
-        }
-
-        console.log("☁️ بازی از رو سرورامون بارگذاری شد.");
-
-    } catch(error) {
-
-        console.error("Cloud Load Error:", error);
-
-        showError(
-            "❌ دریافت ذخیره از سرورامون شکست خورد."
-        );
-    }
-}
-if(maxWarTickets === 10){
-    let maxWarTickets = 5;
-}
-if(warTickets >= 5){
-    let warTickets = 5;
-}
-
-document.getElementById("saveBtn").onclick = async () => {
-
-    const ok = await saveGame();
-
-    if(ok){
-        alert("✅ بازی با موفقیت روی سرور ذخیره شد.");
-    } else {
-        alert("❌ ذخیره روی سرور انجام نشد.");
-    }
-
-};
+document.getElementById("saveBtn").onclick = () => { saveGame(); alert("بازی ذخیره شد."); };
 document.getElementById("resetBtn").onclick = () => { if(confirm("ایا مطمئنی؟ همه دستاورد ها و پیشرفت ها پاک میشوند!")){ localStorage.clear(); location.reload(); }};
 
 document.getElementById("exportBtn").onclick = () => {
@@ -1943,11 +1901,12 @@ document.getElementById("exportBtn").onclick = () => {
 };
 
 document.getElementById("importBtn").onclick = () => {
-
-    showError(
-        "ذخیره دستی غیر فعال است و ذخیره از روی سرورامون انجام میشود!"
-    );
-
+    let input = document.createElement("input"); input.type = "file";
+    input.onchange = e => {
+        let reader = new FileReader();
+        reader.onload = () => { localStorage.setItem("CoinClickerSave", reader.result); loadGame(); updateUI(); alert("وارد شد!"); };
+        reader.readAsText(e.target.files[0]);
+    }; input.click();
 };
 
 /* راه‌اندازی اولیه */
