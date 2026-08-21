@@ -1493,10 +1493,10 @@ function openMineCell(index){
     }
 
     btn.innerText="💎";
-    minesCurrent += Math.floor(minesBet*1.25);
+    minesCurrent += Math.floor(minesBet*1);
     minesCurrentWin.innerText=minesCurrent.toLocaleString();
     cashoutMinesBtn.disabled=false;
-    minesStatus.innerText=`💎 الماس پیدا کردی! +${Math.floor(minesBet*1.25).toLocaleString()} سکه`;
+    minesStatus.innerText=`💎 الماس پیدا کردی! +${Math.floor(minesBet*1).toLocaleString()} سکه`;
 
     if(minesOpened===21){
         cashoutMines();
