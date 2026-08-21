@@ -1287,7 +1287,10 @@ function updateRank(){
         { min: 30000,  max: 50000,  name: "خسته شو حاجی" },
         { min: 50000, max: 100000,  name: "خوار مادر سکه بازی" },
         { min: 100000, max: 200000,  name: "حضرت سکه های نیگا" },
-        { min: 200000, max: Infinity, name: "ابر کون گشاد کلیکر" }
+        { min: 200000, max: 300000, name: "ابر کون گشاد کلیکر" },
+        { min: 300000, max: 600000, name: "بزن که خوب میزنی" },
+        { min: 600000, max: 1000000, name: "گاینده سکه" },
+        { min: 1000000, max: Infinity, name: "نه تریاک نه شیشه فقط جق!" }
     ];
 
     let currentRank = ranks[0];
@@ -1441,7 +1444,7 @@ function startMinesGame(){
     minesStartPanel.style.display="none";
     minesGamePanel.style.display="block";
     minesCurrentWin.innerText="0";
-    minesStatus.innerText="💎 الماس پیدا کن؛ ولی مواظب بمب‌ها باش!";
+    minesStatus.innerText="💎 الماس پیدا کن؛ ولی مواظب بمب‌های کو..ی باش!";
     cashoutMinesBtn.disabled=true;
     updateUI();
     saveGame();
@@ -1490,10 +1493,10 @@ function openMineCell(index){
     }
 
     btn.innerText="💎";
-    minesCurrent += Math.floor(minesBet*1.5);
+    minesCurrent += Math.floor(minesBet*1.25);
     minesCurrentWin.innerText=minesCurrent.toLocaleString();
     cashoutMinesBtn.disabled=false;
-    minesStatus.innerText=`💎 الماس پیدا کردی! +${Math.floor(minesBet*1.5).toLocaleString()} سکه`;
+    minesStatus.innerText=`💎 الماس پیدا کردی! +${Math.floor(minesBet*1.25).toLocaleString()} سکه`;
 
     if(minesOpened===21){
         cashoutMines();
@@ -1507,7 +1510,7 @@ function cashoutMines(){
     totalCoinsEarned += minesCurrent;
     const prize=minesCurrent;
     minesGameActive=false;
-    minesStatus.innerText=`🏆 ${prize.toLocaleString()} سکه به موجودی اضافه شد!`;
+    minesStatus.innerText=`🏆 ${prize.toLocaleString()} سکه به حساب کیریت اضافه شد!`;
     cashoutMinesBtn.disabled=true;
     updateUI();
     saveGame();
