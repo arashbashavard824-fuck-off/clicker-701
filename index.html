@@ -691,8 +691,6 @@ let maxWarTickets = 5;
 let warTicketInterval = 10 * 60 * 1000;
 const warTicketPrice = 50000;
 let lastWarTicketTime = Date.now();
-let minesLastStartAt = 0;
-const MINES_COOLDOWN_MS = 10 * 60 * 1000;
 
 let maxTicketPrice = 25000;
 let ticketSpeedPrice = 100000;
@@ -1230,7 +1228,6 @@ window.sellNFT = async function(instanceId){
          * اطلاعات جدید بازیکن را از Cloudflare می‌گیریم.
          */
         const loaded = await cloudLoadGame();
-        if(loaded) applySaveData(loaded);
 
         if(!loaded){
             showError(
@@ -1418,89 +1415,37 @@ function createMinesBoard(){
     });
 }
 
-async function startMinesGame(){
+function startMinesGame(){
     const bet=Math.floor(Number(minesBetInput.value));
     if(!Number.isFinite(bet) || bet<1000){
         showError("⚠️ حداقل مبلغ بازی ۱٬۰۰۰ سکه است!");
         return;
     }
-
-    const localRemaining = Math.max(0, MINES_COOLDOWN_MS - (Date.now() - minesLastStartAt));
-    if(localRemaining > 0){
-        showMinesCooldown(localRemaining);
-        return;
-    }
-
     if(coins<bet){
         showError("⚠️ سکه کافی نداری!");
         return;
     }
-
-    try {
-        await flushCloudSave();
-        const response = await fetch(CLOUD_API + "/api/mines/start", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ playerId: cloudPlayerId, bet })
-        });
-        const result = await response.json();
-
-        if(!response.ok || !result.ok){
-            if(result.code === "MINES_COOLDOWN"){
-                minesLastStartAt = Date.now() - (MINES_COOLDOWN_MS - Number(result.remainingMs || MINES_COOLDOWN_MS));
-                showMinesCooldown(Number(result.remainingMs || 0));
-            } else {
-                showError(result.error || "❌ شروع الماس بمبی انجام نشد.");
-            }
-            return;
-        }
-
-        if(result.save) applySaveData(result.save);
-        if(result.version !== undefined){
-            window.cloudSaveVersion = Number(result.version) || 0;
-            localStorage.setItem("clicker701_save_version", window.cloudSaveVersion);
-        }
-
-        minesLastStartAt = Number(result.save?.minesLastStartAt) || Date.now();
-        minesBet=bet;
-        minesCurrent=0;
-        minesOpened=0;
-        minesGameActive=true;
-        createMinesBoard();
-        minesStartPanel.style.display="none";
-        minesGamePanel.style.display="block";
-        minesCurrentWin.innerText="0";
-        minesStatus.innerText="💎 الماس پیدا کن؛ ولی مواظب بمب‌ها باش!";
-        cashoutMinesBtn.disabled=true;
-        updateUI();
-        updateMinesCooldownUI();
-    }catch(error){
-        console.error(error);
-        showError("❌ ارتباط با سرور برای شروع الماس بمبی برقرار نشد.");
+    if(warTickets < 1){
+        alert("⚠️ پاپت کافی نداری! (نیاز: یک پاپت)");
+        return;
     }
-}
 
-function showMinesCooldown(ms){
-    const sec=Math.max(0,Math.ceil(ms/1000));
-    const m=Math.floor(sec/60), s=sec%60;
-    showError(`⏳ الماس بمبی تا ${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")} دیگر قابل استفاده نیست.`);
-}
+    warTickets -= 1;
 
-function updateMinesCooldownUI(){
-    const btn=document.getElementById("startMinesBtn");
-    if(!btn) return;
-    const remaining=Math.max(0, MINES_COOLDOWN_MS - (Date.now()-minesLastStartAt));
-    if(remaining>0){
-        const sec=Math.ceil(remaining/1000), m=Math.floor(sec/60), s=sec%60;
-        btn.disabled=true;
-        btn.innerText=`⏳ ${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
-    }else{
-        btn.disabled=false;
-        btn.innerText="با رمز یا 26";
-    }
+    coins-=bet;
+    minesBet=bet;
+    minesCurrent=0;
+    minesOpened=0;
+    minesGameActive=true;
+    createMinesBoard();
+    minesStartPanel.style.display="none";
+    minesGamePanel.style.display="block";
+    minesCurrentWin.innerText="0";
+    minesStatus.innerText="💎 الماس پیدا کن؛ ولی مواظب بمب‌ها باش!";
+    cashoutMinesBtn.disabled=true;
+    updateUI();
+    saveGame();
 }
-
-setInterval(updateMinesCooldownUI,1000);
 
 function openMineCell(index){
     if(!minesGameActive) return;
@@ -1840,7 +1785,6 @@ window.cancelMarketListing = async function(id){
     }
 
     try{
-        await flushCloudSave();
 
         const response = await fetch(
             CLOUD_API + "/api/market/cancel",
@@ -1878,7 +1822,6 @@ window.cancelMarketListing = async function(id){
          * اطلاعات واقعی بازیکن را از Cloudflare می‌گیریم.
          */
         const loaded = await cloudLoadGame();
-        if(loaded) applySaveData(loaded);
 
         if(!loaded){
             showError(
@@ -1934,7 +1877,6 @@ window.buyMarketCard = async function(id){
     }
 
     try{
-        await flushCloudSave();
 
         const response = await fetch(
             CLOUD_API + "/api/market/buy",
@@ -1983,7 +1925,6 @@ window.buyMarketCard = async function(id){
          * بنابراین سکه و کلکسیون از اطلاعات سرور می‌آیند.
          */
         const loaded = await cloudLoadGame();
-        if(loaded) applySaveData(loaded);
 
         if(!loaded){
             showError(
@@ -2014,76 +1955,32 @@ window.buyMarketCard = async function(id){
 /* ==================================================
    ذخیره و بارگذاری
 ================================================== */
-let cloudSaveTimer = null;
-let cloudSaveChain = Promise.resolve();
-
-function getSaveData(){
-    return { 
+function saveGame(){
+    const data = { 
         coins, stage, power, energy, maxEnergy, regen, 
         powerPrice, energyPrice, regenPrice, goldenChance, 
         goldenMultiplier, goldenChancePrice, goldenMultiPrice,
         totalClicks, totalCoinsEarned, totalGoldenClicks, 
         ownedHeroes, myNFTs, warTickets, maxWarTickets, warTicketInterval, 
-        lastWarTicketTime, maxTicketPrice, ticketSpeedPrice,
-        playerName, minesLastStartAt
+        lastWarTicketTime, maxTicketPrice, ticketSpeedPrice 
     };
-}
-
-function applySaveData(d){
-    if(!d || typeof d !== "object") return;
-    coins = Number(d.coins) || 0; stage = Number(d.stage) || 1; power = Number(d.power) || 1;
-    energy = Number(d.energy) || 100; maxEnergy = Number(d.maxEnergy) || 100; regen = Number(d.regen) || 1;
-    powerPrice = Number(d.powerPrice) || 20; energyPrice = Number(d.energyPrice) || 40; regenPrice = Number(d.regenPrice) || 60;
-    goldenChance = Number(d.goldenChance) || 2; goldenMultiplier = Number(d.goldenMultiplier) || 5;
-    goldenChancePrice = Number(d.goldenChancePrice) || 150; goldenMultiPrice = Number(d.goldenMultiPrice) || 300;
-    totalClicks = Number(d.totalClicks) || 0; totalCoinsEarned = Number(d.totalCoinsEarned) || 0; totalGoldenClicks = Number(d.totalGoldenClicks) || 0;
-    ownedHeroes = Array.isArray(d.ownedHeroes) ? d.ownedHeroes : [];
-    myNFTs = Array.isArray(d.myNFTs) ? d.myNFTs : [];
-    warTickets = Number.isFinite(Number(d.warTickets)) ? Number(d.warTickets) : 10;
-    maxWarTickets = Number(d.maxWarTickets) || 10; warTicketInterval = Number(d.warTicketInterval) || (10 * 60 * 1000);
-    lastWarTicketTime = Number(d.lastWarTicketTime) || Date.now();
-    maxTicketPrice = Number(d.maxTicketPrice) || 25000; ticketSpeedPrice = Number(d.ticketSpeedPrice) || 40000;
-    playerName = String(d.playerName || "بازیکن ناشناس").slice(0,20);
-    minesLastStartAt = Number(d.minesLastStartAt) || 0;
-    localStorage.setItem("CoinClickerSave", JSON.stringify(getSaveData()));
-}
-
-function scheduleCloudSave(){
-    clearTimeout(cloudSaveTimer);
-    cloudSaveTimer = setTimeout(() => {
-        const data = getSaveData();
-        cloudSaveChain = cloudSaveChain.then(() => cloudSaveGame(data)).catch(error => {
-            console.error("Cloud save:", error);
-        });
-    }, 900);
-}
-
-async function flushCloudSave(){
-    clearTimeout(cloudSaveTimer);
-    cloudSaveTimer = null;
-    await cloudSaveChain;
-    await cloudSaveGame(getSaveData());
-}
-
-function saveGame(){
-    const data = getSaveData();
     localStorage.setItem("CoinClickerSave", JSON.stringify(data));
-    scheduleCloudSave();
 }
 
-async function loadGame(){
+function loadGame(){
     const saved = localStorage.getItem("CoinClickerSave");
     if(saved){
-        try { applySaveData(JSON.parse(saved)); } catch(error) { console.error("Local save:", error); }
-    }
-
-    try {
-        const cloud = await cloudLoadGame();
-        if(cloud && !saved){
-            applySaveData(cloud);
-        }
-    } catch(error) {
-        console.warn("Cloud load skipped:", error);
+        const d = JSON.parse(saved);
+        coins = d.coins || 0; stage = d.stage || 1; power = d.power || 1;
+        energy = d.energy || 100; maxEnergy = d.maxEnergy || 100; regen = d.regen || 1;
+        powerPrice = d.powerPrice || 20; energyPrice = d.energyPrice || 40; regenPrice = d.regenPrice || 60;
+        goldenChance = d.goldenChance || 2; goldenMultiplier = d.goldenMultiplier || 5;
+        goldenChancePrice = d.goldenChancePrice || 150; goldenMultiPrice = d.goldenMultiPrice || 300;
+        totalClicks = d.totalClicks || 0; totalCoinsEarned = d.totalCoinsEarned || 0; totalGoldenClicks = d.totalGoldenClicks || 0;
+        ownedHeroes = d.ownedHeroes || []; myNFTs = d.myNFTs || []; warTickets = d.warTickets ?? 10;
+        maxWarTickets = d.maxWarTickets || 10; warTicketInterval = d.warTicketInterval || (10 * 60 * 1000);
+        lastWarTicketTime = d.lastWarTicketTime || Date.now();
+        maxTicketPrice = d.maxTicketPrice || 25000; ticketSpeedPrice = d.ticketSpeedPrice || 40000;
     }
 }
 
@@ -2108,7 +2005,6 @@ document.getElementById("importBtn").onclick = () => {
 (async function startGame(){
 
     await loadGame();
-    try { await flushCloudSave(); } catch(error) { console.warn("Initial cloud sync:", error); }
 
     checkStage();
     renderHeroes();
