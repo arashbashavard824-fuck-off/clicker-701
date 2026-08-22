@@ -467,6 +467,52 @@ button.actionBtn:disabled{ background:#555; box-shadow:none; cursor:not-allowed;
             <button id="resetBtn" class="actionBtn" style="background:#dc3545;">🔄 ریست کامل</button>
         </div>
 
+        <!-- کد بشایی -->
+<div class="panel" style="margin-top:15px;">
+    <h3>⚜️ کد بشایی ⚜️</h3>
+
+    <div style="color:#aaa;font-size:12px;margin:8px 0 12px;">
+یکی ار نشانه های بخشندگی بشا
+    </div>
+
+    <div style="display:flex;gap:8px;">
+        <input
+            id="rewardCodeInput"
+            type="text"
+            placeholder="کد مضخرف تان را وارد کنید..."
+            maxlength="30"
+            style="
+                flex:1;
+                padding:12px;
+                border-radius:10px;
+                border:1px solid #555;
+                background:#151515;
+                color:white;
+                outline:none;
+                text-align:center;
+            "
+        >
+
+        <button
+            id="useRewardCodeBtn"
+            class="actionBtn"
+            style="width:120px;margin:0;"
+        >
+        📩 اعمال کد 
+        </button>
+    </div>
+
+    <div
+        id="rewardCodeMessage"
+        style="
+            text-align:center;
+            margin-top:10px;
+            min-height:18px;
+            font-size:12px;
+        "
+    ></div>
+</div>
+
         <div style="font-family: Verdana, Geneva, Tahoma, sans-serif; font-size:11px; opacity:0.6; margin-top:15px;">یکی از کنده کاریای بشا (به همراه MOEIN)</div>
     </div>
 
@@ -1987,22 +2033,157 @@ function loadGame(){
     }
 }
 
-document.getElementById("saveBtn").onclick = () => { saveGame(); alert("بازی ذخیره شد."); };
-document.getElementById("resetBtn").onclick = () => { if(confirm("ایا مطمئنی؟ همه دستاورد ها و پیشرفت ها پاک میشوند!")){ localStorage.clear(); location.reload(); }};
+document.getElementById("saveBtn").onclick = () => { saveGame(); alert("26"); };
+document.getElementById("resetBtn").onclick = () => { if(confirm("ایا مطمئنی؟ همه دستاورد ها و پیشرفت ها پاک میشوند!(بعد از ریست رفرش کنید)")){ localStorage.clear(); location.reload(); }};
 
 document.getElementById("exportBtn").onclick = () => {
-    let blob = new Blob([localStorage.getItem("CoinClickerSave")], {type: "application/json"});
-    let a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "save.json"; a.click();
+alert("siktir🫶")
 };
 
 document.getElementById("importBtn").onclick = () => {
-    let input = document.createElement("input"); input.type = "file";
-    input.onchange = e => {
-        let reader = new FileReader();
-        reader.onload = () => { localStorage.setItem("CoinClickerSave", reader.result); loadGame(); updateUI(); alert("وارد شد!"); };
-        reader.readAsText(e.target.files[0]);
-    }; input.click();
+alert("🖕")
 };
+
+/* ==================================================
+   🎁 سیستم کد بشایی
+================================================== */
+
+// کدهای جایزه
+const rewardCodes = {
+
+    "BASHAISTHEBEST26": {
+        coins: 700000
+    },
+
+};
+
+
+// استفاده از کد
+document.getElementById("useRewardCodeBtn").onclick = function(){
+
+    const input = document.getElementById("rewardCodeInput");
+    const message = document.getElementById("rewardCodeMessage");
+
+    const code = input.value.trim().toUpperCase();
+
+    if(!code){
+        message.style.color = "#ff9800";
+        message.innerText = "⚠️ داش خالی خالی !";
+        return;
+    }
+
+    // کدهای استفاده شده توسط همین بازیکن
+    let usedCodes = JSON.parse(
+        localStorage.getItem("CoinClickerUsedRewardCodes") || "[]"
+    );
+
+    // بررسی استفاده قبلی
+    if(usedCodes.includes(code)){
+        message.style.color = "#ff4444";
+        message.innerText = "⚠️ این کد را قبلا در ک.. خود کرده‌ای!";
+        return;
+    }
+
+    // بررسی وجود کد
+    const reward = rewardCodes[code];
+
+    if(!reward){
+        message.style.color = "#ff4444";
+        message.innerText = "❌ سیکتیر داش این کد وجود ندارد!";
+        return;
+    }
+
+    // دادن جایزه
+    if(reward.coins){
+        coins += reward.coins;
+        totalCoinsEarned += reward.coins;
+    }
+
+    if(reward.power){
+        power += reward.power;
+    }
+
+    if(reward.card){
+
+    myNFTs.push({
+        name: reward.card.name,
+        price: reward.card.price || 0,
+        colorClass: reward.card.colorClass || "lvl-1",
+        typeName: reward.card.typeName || "",
+        img: reward.card.img || "",
+        instanceId: Date.now() + Math.random()
+    });
+    }
+
+    // ثبت کد به عنوان استفاده شده
+    usedCodes.push(code);
+
+    localStorage.setItem(
+        "CoinClickerUsedRewardCodes",
+        JSON.stringify(usedCodes)
+    );
+
+    // ذخیره بازی
+    checkStage();
+    updateUI();
+    updateStats();
+    saveGame();
+
+    input.value = "";
+};
+
+/* ==================================================
+   شروع بازی از صفر در اولین ورود
+================================================== */
+
+const FIRST_GAME_KEY = "Clicker701_FirstGameStarted";
+
+if (!localStorage.getItem(FIRST_GAME_KEY)) {
+
+    // پاک کردن ذخیره قبلی بازی
+    localStorage.removeItem("CoinClickerSave");
+
+    // پاک کردن پاداش روزانه
+    localStorage.removeItem("dailyReward");
+
+    // پاک کردن کدهای بشایی استفاده‌شده
+    localStorage.removeItem("CoinClickerUsedRewardCodes");
+
+    // علامت‌گذاری که بازیکن یک بار از صفر شروع کرده
+    localStorage.setItem(FIRST_GAME_KEY, "yes");
+
+    // اطمینان از شروع کامل از صفر
+    coins = 0;
+    stage = 1;
+    power = 1;
+    energy = 100;
+    maxEnergy = 100;
+    regen = 1;
+
+    powerPrice = 30;
+    energyPrice = 100;
+    regenPrice = 80;
+
+    goldenChance = 2;
+    goldenMultiplier = 5;
+    goldenChancePrice = 300;
+    goldenMultiPrice = 300;
+
+    totalClicks = 0;
+    totalCoinsEarned = 0;
+    totalGoldenClicks = 0;
+
+    ownedHeroes = [];
+    myNFTs = [];
+
+    warTickets = 5;
+    maxWarTickets = 5;
+
+    maxTicketPrice = 25000;
+    ticketSpeedPrice = 40000;
+
+    lastWarTicketTime = Date.now();
+}
 
 /* راه‌اندازی اولیه */
 (async function startGame(){
