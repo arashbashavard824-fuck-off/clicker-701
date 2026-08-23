@@ -354,6 +354,87 @@ button.actionBtn:disabled{ background:#555; box-shadow:none; cursor:not-allowed;
 .marketBtn{background:linear-gradient(180deg,#00a8ff,#0066ff)!important}
 .marketMine{background:linear-gradient(180deg,#ff9800,#e65100)!important}
 
+
+/* ================= شناسه حساب و انتقال سکه ================= */
+.accountBox{
+    margin-top:15px;
+    padding:14px;
+    background:rgba(20,25,35,.95);
+    border:1px solid rgba(0,234,255,.35);
+    border-radius:14px;
+    text-align:center;
+}
+.accountIdValue{
+    direction:ltr;
+    unicode-bidi:plaintext;
+    display:inline-block;
+    margin-top:5px;
+    color:#00eaff;
+    font-size:18px;
+    letter-spacing:2px;
+    font-weight:900;
+}
+.transferModal{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.86);
+    z-index:12000;
+    display:none;
+    justify-content:center;
+    align-items:center;
+    backdrop-filter:blur(6px);
+}
+.transferModal.show{display:flex;}
+.transferBox{
+    width:340px;
+    max-width:92vw;
+    background:linear-gradient(145deg,#111b2e,#24113c);
+    border:2px solid #00eaff;
+    border-radius:20px;
+    padding:18px;
+    position:relative;
+    text-align:center;
+    box-shadow:0 0 30px rgba(0,234,255,.25);
+}
+.transferClose{
+    position:absolute;
+    top:8px;
+    right:12px;
+    border:0;
+    background:transparent;
+    color:white;
+    cursor:pointer;
+    font-size:13px;
+}
+.transferTitle{
+    color:#61f5ff;
+    font-size:21px;
+    margin:3px 0 12px;
+}
+.transferInput{
+    width:100%;
+    padding:11px;
+    margin:5px 0;
+    border-radius:9px;
+    border:1px solid #52627a;
+    background:#0b0f17;
+    color:white;
+    text-align:center;
+    font-weight:900;
+    outline:none;
+}
+.transferInput:focus{border-color:#00eaff;box-shadow:0 0 8px rgba(0,234,255,.2);}
+.transferStatus{
+    min-height:22px;
+    margin-top:10px;
+    font-size:12px;
+    font-weight:900;
+    line-height:1.7;
+}
+.transferStatus.ok{color:#00ff9d;}
+.transferStatus.err{color:#ff5252;}
+.transferStatus.wait{color:#ffd54f;}
+
 </style>
 
 </head>
@@ -361,7 +442,7 @@ button.actionBtn:disabled{ background:#555; box-shadow:none; cursor:not-allowed;
 <body>
 
 <button id="openCasinoBtn">🎰</button>
-<button id="openMinesBtn" title="الماس و بمب">💎</button>
+<button id="openMinesBtn" title="سیخ و سنگ">💎</button>
 
 <div id="minesModal">
   <div class="minesBox">
@@ -376,7 +457,7 @@ button.actionBtn:disabled{ background:#555; box-shadow:none; cursor:not-allowed;
 
     <div id="minesGamePanel" style="display:none;">
       <div class="minesWin">مبلغ جمع شده: <span id="minesCurrentWin">0</span></div>
-      <div id="minesStatus">یک مربع کو..چولو را انتخاب کن...</div>
+      <div id="minesStatus">یک مربع کو..چولو را انتخاب کن</div>
       <div id="minesBoard"></div>
       <button id="cashoutMinesBtn" class="actionBtn" disabled>سیکتیر و دریافت سکه 🏁</button>
     </div>
@@ -392,6 +473,41 @@ button.actionBtn:disabled{ background:#555; box-shadow:none; cursor:not-allowed;
         <input type="number" id="betAmount" class="casino-input" placeholder="مبلغ شرط (۱,۰۰۰ تا ۱,۰۰۰,۰۰۰)">  
         <button id="spinCasinoBtn" class="actionBtn" style="background: linear-gradient(45deg, #e65100, #ff9800);">🎲 چرخش گردونه!</button>  
         <div id="casinoResult" style="font-size:12px; margin-top:10px; color:#ffd700; font-weight:bold; min-height:18px;"></div>  
+    </div>
+</div>
+
+
+<!-- ================= پنجره انتقال سکه ================= -->
+<div id="transferModal" class="transferModal">
+    <div class="transferBox">
+        <button id="closeTransferBtn" class="transferClose">بستن</button>
+        <div class="transferTitle">💸 انتقال سکه</div>
+
+        <div style="font-size:11px;color:#aaa;margin-bottom:5px;">
+            شناسه حساب گیرنده را وارد کنید
+        </div>
+        <input id="transferRecipientInput"
+               class="transferInput"
+               inputmode="numeric"
+               maxlength="9"
+               placeholder="مثلاً 123456789">
+
+        <div style="font-size:11px;color:#aaa;margin-top:8px;">
+            میزان سکه
+        </div>
+        <input id="transferAmountInput"
+               class="transferInput"
+               type="number"
+               min="1"
+               step="1"
+               placeholder="مبلغ انتقال">
+
+        <button id="transferSubmitBtn" class="actionBtn"
+                style="margin-top:10px;background:linear-gradient(180deg,#18b957,#08752f);">
+            انتقال
+        </button>
+
+        <div id="transferStatus" class="transferStatus"></div>
     </div>
 </div>
 
@@ -460,10 +576,10 @@ button.actionBtn:disabled{ background:#555; box-shadow:none; cursor:not-allowed;
         </div>
 
         <div class="panel">
-            <h3>💾 فایل ذخیره</h3>
-            <button id="saveBtn" class="actionBtn" style="background:#17a2b8;">💾 ذخیره بازی</button>
-            <button id="exportBtn" class="actionBtn" style="background:#6c757d;">📤 خروجی فایل</button>
-            <button id="importBtn" class="actionBtn" style="background:#6c757d;">📥 وارد کردن فایل</button>
+            <h3>💾</h3>
+            <button id="saveBtn" class="actionBtn" style="background:#17a2b8;">-</button>
+            <button id="exportBtn" class="actionBtn" style="background:#6c757d;">-</button>
+            <button id="importBtn" class="actionBtn" style="background:#6c757d;">-</button>
             <button id="resetBtn" class="actionBtn" style="background:#dc3545;">🔄 ریست کامل</button>
         </div>
 
@@ -472,7 +588,7 @@ button.actionBtn:disabled{ background:#555; box-shadow:none; cursor:not-allowed;
     <h3>⚜️ کد بشایی ⚜️</h3>
 
     <div style="color:#aaa;font-size:12px;margin:8px 0 12px;">
-یکی ار نشانه های بخشندگی بشا
+یکی از نشانه های بخشندگی بشا
     </div>
 
     <div style="display:flex;gap:8px;">
@@ -498,7 +614,7 @@ button.actionBtn:disabled{ background:#555; box-shadow:none; cursor:not-allowed;
             class="actionBtn"
             style="width:120px;margin:0;"
         >
-        📩 اعمال کد 
+        📩اعمال 
         </button>
     </div>
 
@@ -512,6 +628,17 @@ button.actionBtn:disabled{ background:#555; box-shadow:none; cursor:not-allowed;
         "
     ></div>
 </div>
+
+
+        <!-- ================= حساب و انتقال سکه ================= -->
+        <div class="accountBox">
+            <div style="font-size:13px;color:#aaa;">شناسه حساب شما</div>
+            <div id="accountIdText" class="accountIdValue">در حال دریافت...</div>
+            <button id="openTransferBtn" class="actionBtn"
+                    style="margin-top:10px;background:linear-gradient(180deg,#00a8ff,#0066ff);">
+                💸 انتقال سکه
+            </button>
+        </div>
 
         <div style="font-family: Verdana, Geneva, Tahoma, sans-serif; font-size:11px; opacity:0.6; margin-top:15px;">یکی از کنده کاریای بشا (به همراه MOEIN)</div>
     </div>
@@ -922,7 +1049,14 @@ function updateUI(){
 }
 
 function checkStage(){
-    if(coins >= 50000) { stage = 8; coin.src = "moradi.jpg";}
+    if(coins >= 3000000) { stage = 15; coin.src = "vafadari.jpg";}
+    else if(coins >= 2500000) { stage = 14; coin.src = "vafadari.jpg";}
+    else if(coins >= 2000000) { stage = 13; coin.src = "vafadari.jpg";}
+    else if(coins >= 1500000) { stage = 12; coin.src = "shahedi1.jpg";}
+    else if(coins >= 1000000) { stage = 11; coin.src = "keshavarz.webp";}
+    else if(coins >= 500000) { stage = 10; coin.src = "kamel.webp";}
+    else if(coins >= 200000) { stage = 9; coin.src = "stabsefid.webp";}
+    else if(coins >= 50000) { stage = 8; coin.src = "moradi.jpg";}
     else if(coins >= 30000) { stage = 7; coin.src = "sharifi.jpg";}
     else if(coins >= 15000) { stage = 6; coin.src = "nezam.jpg"; }
     else if(coins >= 5500) { stage = 5; coin.src = "gh.jpg"; }
@@ -1336,7 +1470,10 @@ function updateRank(){
         { min: 200000, max: 300000, name: "ابر کون گشاد کلیکر" },
         { min: 300000, max: 600000, name: "بزن که خوب میزنی" },
         { min: 600000, max: 1000000, name: "گاینده سکه" },
-        { min: 1000000, max: Infinity, name: "نه تریاک نه شیشه فقط جق!" }
+        { min: 1000000, max: 2600000, name: "نه تریاک نه شیشه فقط جق!" },
+        { min: 2600000, max: 4000000, name: "بز بز قندی" },
+        { min: 4000000, max: 5500000, name: "نیگایی از مزارع پنبه" },
+        { min: 5500000, max: Infinity, name: "خداوند نیگا ها را نمیبخشد" }
     ];
 
     let currentRank = ranks[0];
@@ -2052,8 +2189,16 @@ alert("🖕")
 const rewardCodes = {
 
     "BASHAISTHEBEST26": {
-        coins: 700000
+    coins: 700000,
+    card: {
+name: "ار پی چی زن مناطق صعب العبور", 
+price: 30000, 
+colorClass: "lvl-5", 
+typeName: "صفاری", 
+img: "ghafarrpg.png"
+    }
     },
+
 
 };
 
@@ -2068,7 +2213,7 @@ document.getElementById("useRewardCodeBtn").onclick = function(){
 
     if(!code){
         message.style.color = "#ff9800";
-        message.innerText = "⚠️ داش خالی خالی !";
+        message.innerText = "⚠️ خالی خالی !";
         return;
     }
 
@@ -2089,7 +2234,7 @@ document.getElementById("useRewardCodeBtn").onclick = function(){
 
     if(!reward){
         message.style.color = "#ff4444";
-        message.innerText = "❌ سیکتیر داش این کد وجود ندارد!";
+        message.innerText = "❌ سیکتیر داش این کد وجود نداره!";
         return;
     }
 
@@ -2204,6 +2349,247 @@ if (!localStorage.getItem(FIRST_GAME_KEY)) {
     ).value = playerName || "";
 
 })();
+
+
+/* ==================================================
+   👤 سیستم شناسه حساب و انتقال سکه
+   توجه: موجودی و انتقال نهایی فقط باید توسط Worker
+   و به صورت اتمیک انجام شود.
+================================================== */
+
+let accountId = null;
+let transferBusy = false;
+
+const transferModal = document.getElementById("transferModal");
+const accountIdText = document.getElementById("accountIdText");
+const openTransferBtn = document.getElementById("openTransferBtn");
+const closeTransferBtn = document.getElementById("closeTransferBtn");
+const transferRecipientInput = document.getElementById("transferRecipientInput");
+const transferAmountInput = document.getElementById("transferAmountInput");
+const transferSubmitBtn = document.getElementById("transferSubmitBtn");
+const transferStatus = document.getElementById("transferStatus");
+
+function setTransferStatus(message, type=""){
+    transferStatus.className = "transferStatus " + type;
+    transferStatus.innerText = message || "";
+}
+
+function openTransferModal(){
+    setTransferStatus("");
+    transferRecipientInput.value = "";
+    transferAmountInput.value = "";
+    transferModal.classList.add("show");
+    setTimeout(() => transferRecipientInput.focus(), 50);
+}
+
+function closeTransferModal(){
+    if(transferBusy) return;
+    transferModal.classList.remove("show");
+}
+
+openTransferBtn.onclick = openTransferModal;
+closeTransferBtn.onclick = closeTransferModal;
+
+transferModal.addEventListener("click", e => {
+    if(e.target === transferModal) closeTransferModal();
+});
+
+transferRecipientInput.addEventListener("input", () => {
+    transferRecipientInput.value =
+        transferRecipientInput.value.replace(/\D/g, "").slice(0, 9);
+});
+
+async function loadAccountId(){
+    accountIdText.innerText = "در حال دریافت...";
+    try{
+        const response = await fetch(
+            CLOUD_API + "/api/account?playerId=" +
+            encodeURIComponent(cloudPlayerId)
+        );
+
+        const result = await response.json();
+
+        if(!response.ok || !result.ok || !/^\d{9}$/.test(String(result.accountId || ""))){
+            throw new Error(result.error || "شناسه حساب دریافت نشد.");
+        }
+
+        accountId = String(result.accountId);
+        accountIdText.innerText = accountId;
+    }catch(error){
+        console.error(error);
+        accountIdText.innerText = "خطا در دریافت شناسه";
+    }
+}
+
+async function refreshAfterTransfer(){
+    /*
+     * بعد از انتقال موفق، موجودی واقعی از سرور دوباره لود می‌شود.
+     * قبل از پاسخ موفق Worker، coins در سمت فرستنده دستکاری نمی‌شود.
+     */
+    const loaded = await cloudLoadGame();
+
+    if(!loaded){
+        throw new Error("انتقال انجام شد ولی دریافت موجودی جدید از سرور ناموفق بود.");
+    }
+
+    coins = Number(loaded.coins) || 0;
+    stage = Number(loaded.stage) || 1;
+    power = Number(loaded.power) || 1;
+    energy = Number(loaded.energy) || 100;
+    maxEnergy = Number(loaded.maxEnergy) || 100;
+    regen = Number(loaded.regen) || 1;
+    powerPrice = Number(loaded.powerPrice) || 20;
+    energyPrice = Number(loaded.energyPrice) || 40;
+    regenPrice = Number(loaded.regenPrice) || 60;
+    goldenChance = Number(loaded.goldenChance) || 2;
+    goldenMultiplier = Number(loaded.goldenMultiplier) || 5;
+    goldenChancePrice = Number(loaded.goldenChancePrice) || 150;
+    goldenMultiPrice = Number(loaded.goldenMultiPrice) || 300;
+    totalClicks = Number(loaded.totalClicks) || 0;
+    totalCoinsEarned = Number(loaded.totalCoinsEarned) || 0;
+    totalGoldenClicks = Number(loaded.totalGoldenClicks) || 0;
+    ownedHeroes = Array.isArray(loaded.ownedHeroes) ? loaded.ownedHeroes : [];
+    myNFTs = Array.isArray(loaded.myNFTs) ? loaded.myNFTs : [];
+    warTickets = Number(loaded.warTickets ?? 10);
+    maxWarTickets = Number(loaded.maxWarTickets) || 10;
+    warTicketInterval = Number(loaded.warTicketInterval) || (10 * 60 * 1000);
+    lastWarTicketTime = Number(loaded.lastWarTicketTime) || Date.now();
+    maxTicketPrice = Number(loaded.maxTicketPrice) || 25000;
+    ticketSpeedPrice = Number(loaded.ticketSpeedPrice) || 40000;
+
+    checkStage();
+    updateUI();
+    updateStats();
+    renderHeroes();
+    renderCollection();
+}
+
+async function transferCoins(){
+    if(transferBusy) return;
+
+    const recipientAccountId = String(
+        transferRecipientInput.value || ""
+    ).trim();
+
+    const amount = Math.floor(
+        Number(transferAmountInput.value)
+    );
+
+    if(!/^\d{9}$/.test(recipientAccountId)){
+        setTransferStatus("❌ شناسه حساب گیرنده باید دقیقاً ۹ رقم باشد.", "err");
+        return;
+    }
+
+    if(recipientAccountId === String(accountId)){
+        setTransferStatus("❌ نمی‌توانی به حساب خودت انتقال بدهی.", "err");
+        return;
+    }
+
+    if(!Number.isSafeInteger(amount) || amount <= 0){
+        setTransferStatus("❌ مبلغ انتقال باید یک عدد صحیح بزرگ‌تر از صفر باشد.", "err");
+        return;
+    }
+
+    if(amount > Math.floor(Number(coins) || 0)){
+        setTransferStatus("❌ سکه کافی نداری.", "err");
+        return;
+    }
+
+    transferBusy = true;
+    transferSubmitBtn.disabled = true;
+    setTransferStatus("⏳ در حال انجام انتقال روی سرور...", "wait");
+
+    try{
+        /*
+         * نکته مهم:
+         * این درخواست نباید در مرورگر موجودی را کم کند.
+         * Worker باید فرستنده و گیرنده را اتمیک به‌روزرسانی کند
+         * و فقط در صورت موفقیت کامل {ok:true} برگرداند.
+         */
+        const response = await fetch(
+            CLOUD_API + "/api/transfer",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    playerId: cloudPlayerId,
+                    recipientAccountId,
+                    amount
+                })
+            }
+        );
+
+        let result = {};
+        try{
+            result = await response.json();
+        }catch(_){
+            result = {};
+        }
+
+        if(!response.ok || !result.ok){
+            setTransferStatus(
+                result.error || "❌ واریز انجام نشد و هیچ سکه‌ای از حساب شما کم نشد.",
+                "err"
+            );
+            return;
+        }
+
+        if(result.senderVersion !== undefined){
+            window.cloudSaveVersion =
+                Number(result.senderVersion) || 0;
+
+            localStorage.setItem(
+                "clicker701_save_version",
+                window.cloudSaveVersion
+            );
+        }
+
+        /*
+         * فقط بعد از پاسخ موفق Worker، موجودی جدید فرستنده را
+         * از Cloudflare می‌گیریم.
+         */
+        await refreshAfterTransfer();
+
+        setTransferStatus(
+            "✅ واریز با موفقیت کامل شد. " +
+            amount.toLocaleString() +
+            " سکه به حساب " +
+            recipientAccountId +
+            " منتقل شد.",
+            "ok"
+        );
+
+        transferAmountInput.value = "";
+        transferRecipientInput.value = "";
+    }catch(error){
+        console.error(error);
+        setTransferStatus(
+            "❌ ارتباط با سرور برقرار نشد؛ هیچ سکه‌ای از حساب شما کم نشد.",
+            "err"
+        );
+    }finally{
+        transferBusy = false;
+        transferSubmitBtn.disabled = false;
+    }
+}
+
+transferSubmitBtn.onclick = transferCoins;
+
+transferAmountInput.addEventListener("keydown", e => {
+    if(e.key === "Enter") transferCoins();
+});
+
+transferRecipientInput.addEventListener("keydown", e => {
+    if(e.key === "Enter") transferCoins();
+});
+
+/* بعد از آماده شدن بازی، شناسه حساب را از Worker بگیر */
+window.addEventListener("load", () => {
+    loadAccountId();
+});
+
 </script>
 </body>
 </html>
