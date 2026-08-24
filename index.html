@@ -422,7 +422,7 @@ button.actionBtn:disabled{ background:#555; box-shadow:none; cursor:not-allowed;
         </div>
         <div id="energyBar"><div id="energyFill"></div></div>
 
-        <img id="coin" src="img1.jpg" alt="Coin">
+        <img id="coin" src="ghane.jpg" alt="Coin">
 
         <div class="buyModeArea">
             <span>حالت خرید:</span>
@@ -922,7 +922,14 @@ function updateUI(){
 }
 
 function checkStage(){
-    if(coins >= 50000) { stage = 8; coin.src = "moradi.jpg";}
+    if(coins >= 3000000) { stage = 15; coin.src = "vafadari.jpg";}
+    else if(coins >= 2500000) { stage = 14; coin.src = "vafadari.jpg";}
+    else if(coins >= 2000000) { stage = 13; coin.src = "vafadari.jpg";}
+    else if(coins >= 1500000) { stage = 12; coin.src = "shahedi1.jpg";}
+    else if(coins >= 1000000) { stage = 11; coin.src = "keshavarz.webp";}
+    else if(coins >= 500000) { stage = 10; coin.src = "kamel.webp";}
+    else if(coins >= 200000) { stage = 9; coin.src = "stabsefid.webp";}
+    else if(coins >= 50000) { stage = 8; coin.src = "moradi.jpg";}
     else if(coins >= 30000) { stage = 7; coin.src = "sharifi.jpg";}
     else if(coins >= 15000) { stage = 6; coin.src = "nezam.jpg"; }
     else if(coins >= 5500) { stage = 5; coin.src = "gh.jpg"; }
