@@ -5,6 +5,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>انگشتش کن!</title>
+<meta name="description" content="یه گیم سم از بشا و MOEIN">
+<meta name="keywords" content="انگشتش کن، کلیکر 701 ،clicker701 ،انگشتشکن، کلیکر701، انگشتش کن!، انگشتش کن 701">
 <style>
 *{
     margin:0;
@@ -189,6 +191,20 @@ button.actionBtn:disabled{ background:#555; box-shadow:none; cursor:not-allowed;
     font-size:15px;
     text-align:center;
     font-weight:bold;
+}
+
+.panel2{
+    margin-top:12px;
+    margin-bottom:12px;
+    padding:12px;
+    background:rgba(75, 25, 25, 0.76);
+    border-radius:11px;
+    border:1px solid rgba(0,170,255,.2);
+    box-shadow:0 0 4px #00b7ffa4;
+    font-size:15px;
+    text-align:center;
+    font-weight:bold;
+    font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
 }
 
 .panel h3{ color:#4ff9ff; margin-bottom:8px; font-size:20px; font-weight:900; }
@@ -472,7 +488,10 @@ button.actionBtn:disabled{ background:#555; box-shadow:none; cursor:not-allowed;
     <h3>⚜️ کد بشایی ⚜️</h3>
 
     <div style="color:#aaa;font-size:12px;margin:8px 0 12px;">
-یکی از نشانه های بخشندگی بشا
+کد این هفته
+    </div>
+    <div class="panel2">
+ملی‌گرایان چینی در قرن بیستم، چه سالی را آغاز یک سده تحقیر می‌دانستند و بسیاری از مورخان آن را آغاز تاریخ مدرن چین می‌دانند
     </div>
 
     <div style="display:flex;gap:8px;">
@@ -2061,6 +2080,13 @@ alert("🖕")
 // کدهای جایزه
 const rewardCodes = {
 
+    "1839": {
+    coins: 300000,
+    },
+    "I.AM.VENOM": {
+        coins: 500000,
+    }
+
 };
 
 
@@ -2095,7 +2121,7 @@ document.getElementById("useRewardCodeBtn").onclick = function(){
 
     if(!reward){
         message.style.color = "#ff4444";
-        message.innerText = "❌ سیکتیر داش این کد وجود نداره!";
+        message.innerText = "❌ سیکتیر داش این اشتباهه!";
         return;
     }
 
