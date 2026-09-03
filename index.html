@@ -486,7 +486,6 @@ button.actionBtn:disabled{ background:#555; box-shadow:none; cursor:not-allowed;
         <!-- کد بشایی -->
 <div class="panel" style="margin-top:15px;">
     <h3>⚜️ کد بشایی ⚜️</h3>
-    <div style="font-size:12px;color:#aaa;margin:6px 0 12px;">🏦 شناسه حساب شما: <strong id="accountIdText" style="color:#ffd700;letter-spacing:2px;">در حال دریافت...</strong></div>
 
     <div style="color:#aaa;font-size:12px;margin:8px 0 12px;">
 کد این هفته
@@ -627,29 +626,6 @@ if (!cloudPlayerId) {
     );
 }
 
-let cloudAccountId = localStorage.getItem("clicker701_account_id") || "";
-
-function renderAccountId(){
-    const el = document.getElementById("accountIdText");
-    if(el) el.innerText = cloudAccountId || "در حال دریافت...";
-}
-
-async function refreshAccountId(){
-    const response = await fetch(
-        CLOUD_API + "/api/account?playerId=" + encodeURIComponent(cloudPlayerId)
-    );
-    const result = await response.json();
-    if(!response.ok || !result.ok){
-        throw new Error(result.error || "دریافت شناسه حساب انجام نشد.");
-    }
-    cloudAccountId = String(result.accountId || "");
-    localStorage.setItem("clicker701_account_id", cloudAccountId);
-    renderAccountId();
-    return cloudAccountId;
-}
-
-renderAccountId();
-
 // =====================================================
 // ارسال اطلاعات به Cloudflare
 // =====================================================
@@ -748,12 +724,6 @@ localStorage.setItem(
     "clicker701_save_version",
     window.cloudSaveVersion
 );
-
-if(result.accountId){
-    cloudAccountId = String(result.accountId);
-    localStorage.setItem("clicker701_account_id", cloudAccountId);
-    renderAccountId();
-}
 
 return result.save;
 
@@ -1280,147 +1250,458 @@ function renderCollection(){
     });
 }
 
-window.sellNFT = async function(instanceId) {
-    const index = myNFTs.findIndex(x => String(x.instanceId) === String(instanceId));
-    if(index === -1){ showError("❌ اطلاعات این کارت در بازی پیدا نشد."); return; }
-    const nft = myNFTs[index];
-    const defaultPrice = Math.floor(Number(nft.price) || 0);
-    const input = prompt("💰 قیمت فروش کارت را وارد کن:", defaultPrice > 0 ? String(defaultPrice) : "");
-    if(input === null) return;
-    const price = Math.floor(Number(String(input).replace(/,/g, "").trim()));
-    if(!Number.isSafeInteger(price) || price <= 0){ showError("❌ قیمت فروش معتبر نیست."); return; }
+window.sellNFT = async function(instanceId){
+
+    const nft = myNFTs.find(
+        x => String(x.instanceId) === String(instanceId)
+    );
+
+    const price = Math.floor(Number(nft.price) || 0);
+
+    if(price <= 0){
+        showError("❌ جیگر قیمت کارت درست نیست.");
+        return;
+    }
+
     try{
-        await flushCloudSave();
-        const response = await fetch(CLOUD_API + "/api/market/sell", {
-            method:"POST", headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({ playerId:cloudPlayerId, sellerName:playerName || "بازیکن ناشناس", instanceId:String(nft.instanceId), price })
-        });
+
+        const response = await fetch(
+            CLOUD_API + "/api/market/sell",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    playerId: cloudPlayerId,
+                    instanceId: instanceId
+                })
+            }
+        );
+
         const result = await response.json();
-        if(!response.ok || !result.ok){ showError(result.error || "❌ فروش کارت انجام نشد."); await loadCloudMarket(); return; }
-        if(result.version !== undefined){
-            window.cloudSaveVersion = Number(result.version) || 0;
-            localStorage.setItem("clicker701_save_version", window.cloudSaveVersion);
+
+        if(!response.ok || !result.ok){
+
+            showError(
+                result.error || "❌ فروش کارت با موفقیت انجام نشد."
+            );
+
+            await loadCloudMarket();
+            return;
         }
+
+        if(result.version !== undefined){
+            window.cloudSaveVersion =
+                Number(result.version) || 0;
+        }
+
+        /*
+         * اطلاعات جدید بازیکن را از Cloudflare می‌گیریم.
+         */
         const loaded = await cloudLoadGame();
-        if(!loaded){ showError("⚠️ کارت در بازار ثبت شد، اما دریافت ذخیره جدید ناموفق بود."); await loadCloudMarket(); return; }
-        applySaveData(loaded);
-        updateUI(); updateStats(); renderCollection();
+
+        if(!loaded){
+            showError(
+                "⚠️ کارت در بازار قرار گرفت، اما دریافت اطلاعات جدید با موفقیت ناموفق بود."
+            );
+            await loadCloudMarket();
+            return;
+        }
+
+        updateUI();
+        renderCollection();
+
         await loadCloudMarket();
-        showError("✅ کارت با قیمت " + price.toLocaleString() + " سکه در بازار قرار گرفت.");
+
+        showError("✅ کارت با موفقیت در بازار قرار گرفت.");
+
     }catch(error){
-        console.error("SELL ERROR:", error);
-        showError("❌ ارتباط با سرور برقرار نشد.");
+
+        console.error(error);
+
+        showError(
+            "❌ ارتباط با سرورامون با موفقیت نا موفق بود."
+        );
+
+    }
+};
+
+/* ==================================================
+   شارژ انرژی اتوماتیک
+================================================== */
+setInterval(() => {
+    if(energy < maxEnergy){
+        energy = Math.min(maxEnergy, energy + (regen / 10));
+        updateUI();
+    }
+}, 100);
+
+/* ==================================================
+   آمار و رتبه
+================================================== */
+function updateStats(){
+    document.getElementById("clickCount").innerText = totalClicks;
+    document.getElementById("coinCount").innerText = totalCoinsEarned.toLocaleString();
+    document.getElementById("goldenClickCount").innerText = totalGoldenClicks;
+    updateRank();
+}
+
+function updateRank(){
+
+    const earned = Number(totalCoinsEarned) || 0;
+
+    const ranks = [
+        { min: 0,      max: 50,      name: "حروم لقمه" },
+        { min: 50,     max: 1000,    name: "نیگا" },
+        { min: 1000,   max: 15000,   name: "mr.26 kir" },
+        { min: 15000,  max: 30000,   name: "سکه باز جنده" },
+        { min: 30000,  max: 50000,  name: "خسته شو حاجی" },
+        { min: 50000, max: 100000,  name: "خوار مادر سکه بازی" },
+        { min: 100000, max: 200000,  name: "حضرت سکه های نیگا" },
+        { min: 200000, max: 300000, name: "ابر کون گشاد کلیکر" },
+        { min: 300000, max: 600000, name: "بزن که خوب میزنی" },
+        { min: 600000, max: 1000000, name: "گاینده سکه" },
+        { min: 1000000, max: 2600000, name: "نه تریاک نه شیشه فقط جق!" },
+        { min: 2600000, max: 4000000, name: "بز بز قندی" },
+        { min: 4000000, max: 5500000, name: "نیگایی از مزارع پنبه" },
+        { min: 5500000, max: Infinity, name: "خداوند نیگا ها را نمیبخشد" }
+    ];
+
+    let currentRank = ranks[0];
+
+    // پیدا کردن رتبه فعلی
+    for(let i = 0; i < ranks.length; i++){
+
+        if(earned >= ranks[i].min){
+            currentRank = ranks[i];
+        }
+
+    }
+
+    let percent = 100;
+
+    // اگر هنوز رتبه آخر نیست
+    if(currentRank.max !== Infinity){
+
+        const needed = currentRank.max - currentRank.min;
+        const progress = earned - currentRank.min;
+
+        percent = (progress / needed) * 100;
+
+        // جلوگیری از کمتر از صفر یا بیشتر از 100
+        percent = Math.max(0, Math.min(100, percent));
+    }
+
+    // نمایش نام رتبه
+    const rankText = document.getElementById("rankText");
+
+    if(rankText){
+        rankText.innerText = currentRank.name;
+    }
+
+    // حرکت نوار
+    const progressFill = document.getElementById("progressFill");
+
+    if(progressFill){
+
+        progressFill.style.width = percent + "%";
+
+    }
+
+    // نمایش درصد
+    const progressText = document.getElementById("progressText");
+
+    if(progressText){
+
+        progressText.innerText = Math.floor(percent) + "%";
+
+    }
+}
+
+document.getElementById("dailyReward").onclick = () => {
+    const today = new Date().toDateString();
+    if(localStorage.getItem("dailyReward") === today){
+        alert("برو دیروز بیا جیگر ⚠️");
+    } else {
+    coins += 100;
+    totalCoinsEarned += 100;
+    localStorage.setItem("dailyReward", today);
+        updateUI(); alert("🎉 100 سکه دریافت کردی");
     }
 };
 
 
-async function loadCloudMarket() {
+/* ==================================================
+   بازی الماس و بمب - 6×6
+   21 الماس + 15 بمب
+================================================== */
+const minesModal = document.getElementById("minesModal");
+const minesStartPanel = document.getElementById("minesStartPanel");
+const minesGamePanel = document.getElementById("minesGamePanel");
+const minesBoard = document.getElementById("minesBoard");
+const minesBetInput = document.getElementById("minesBetInput");
+const minesCurrentWin = document.getElementById("minesCurrentWin");
+const minesStatus = document.getElementById("minesStatus");
+const cashoutMinesBtn = document.getElementById("cashoutMinesBtn");
 
-    try {
+let minesGameActive = false;
+let minesBet = 0;
+let minesCurrent = 0;
+let minesOpened = 0;
+let minesCells = [];
 
-        const response =
-            await fetch(
-                CLOUD_API +
-                "/api/market"
-            );
+document.getElementById("openMinesBtn").onclick = () => {
+    minesModal.style.display = "flex";
+};
 
-        const result =
-            await response.json();
+document.getElementById("closeMinesBtn").onclick = () => {
+    minesModal.style.display = "none";
+};
 
-        if (
-            !response.ok ||
-            !result.ok
-        ) {
+function resetMinesUI(message){
+    minesGameActive = false;
+    minesStartPanel.style.display = "block";
+    minesGamePanel.style.display = "none";
+    minesBoard.innerHTML = "";
+    minesCurrentWin.innerText = "0";
+    minesStatus.innerText = message || "مبلغ شرط را وارد کن و شروع کن.";
+    cashoutMinesBtn.disabled = true;
+    minesBetInput.value = "";
+}
 
+function createMinesBoard(){
+    minesCells = Array.from({length:36}, (_,i) => ({index:i, type:"bomb", opened:false}));
+
+    // دقیقاً ۲۱ الماس و ۱۵ بمب
+    const indexes = Array.from({length:36}, (_,i) => i);
+    for(let i=indexes.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));
+        [indexes[i],indexes[j]]=[indexes[j],indexes[i]];
+    }
+    indexes.slice(0,21).forEach(i => minesCells[i].type="diamond");
+
+    minesBoard.innerHTML = "";
+    minesCells.forEach(cell => {
+        const btn=document.createElement("button");
+        btn.className="mineCell";
+        btn.type="button";
+        btn.dataset.index=cell.index;
+        btn.innerText="?";
+        btn.onclick=()=>openMineCell(cell.index);
+        minesBoard.appendChild(btn);
+    });
+}
+
+function startMinesGame(){
+    const bet=Math.floor(Number(minesBetInput.value));
+    if(!Number.isFinite(bet) || bet<1000){
+        showError("⚠️ حداقل مبلغ بازی ۱٬۰۰۰ سکه است!");
+        return;
+    }
+    if(coins<bet){
+        showError("⚠️ سکه کافی نداری!");
+        return;
+    }
+    if(warTickets < 1){
+        alert("⚠️ پاپت کافی نداری! (نیاز: یک پاپت)");
+        return;
+    }
+
+    warTickets -= 1;
+
+    coins-=bet;
+    minesBet=bet;
+    minesCurrent=0;
+    minesOpened=0;
+    minesGameActive=true;
+    createMinesBoard();
+    minesStartPanel.style.display="none";
+    minesGamePanel.style.display="block";
+    minesCurrentWin.innerText="0";
+    minesStatus.innerText="💎 الماس پیدا کن؛ ولی مواظب بمب‌های کو..ی باش!";
+    cashoutMinesBtn.disabled=true;
+    updateUI();
+    saveGame();
+}
+
+function openMineCell(index){
+    if(!minesGameActive) return;
+    const cell=minesCells[index];
+    if(!cell || cell.opened) return;
+
+    cell.opened=true;
+    minesOpened++;
+    const btn=minesBoard.children[index];
+    btn.classList.add("open");
+
+    if(cell.type==="bomb"){
+        btn.classList.add("bomb");
+        btn.innerText="💣";
+        minesGameActive=false;
+        cashoutMinesBtn.disabled=true;
+
+        // نمایش همه خانه‌ها بعد از انفجار
+        minesCells.forEach((c,i)=>{
+            const b=minesBoard.children[i];
+            if(!c.opened){
+                b.classList.add("open");
+                b.innerText=c.type==="bomb" ? "💣" : "💎";
+                if(c.type==="bomb") b.classList.add("bomb");
+            }
+        });
+
+        minesStatus.innerText="💥 بمب بود! مبلغ این دور صفر شد. بازی را دوباره شروع کن.";
+        minesCurrent=0;
+        minesCurrentWin.innerText="0";
+        updateUI();
+        saveGame();
+
+        setTimeout(()=>{
+            minesStartPanel.style.display="block";
+            minesGamePanel.style.display="none";
+            minesBoard.innerHTML="";
+            minesBetInput.value="";
+            minesStatus.innerText="مبلغ شرط جدید را وارد کن.";
+        },900);
+        return;
+    }
+
+    btn.innerText="💎";
+    minesCurrent += Math.floor(minesBet*1);
+    minesCurrentWin.innerText=minesCurrent.toLocaleString();
+    cashoutMinesBtn.disabled=false;
+    minesStatus.innerText=`💎 الماس پیدا کردی! +${Math.floor(minesBet*1).toLocaleString()} سکه`;
+
+    if(minesOpened===21){
+        cashoutMines();
+        return;
+    }
+}
+
+function cashoutMines(){
+    if(!minesGameActive || minesCurrent<=0) return;
+    coins += minesCurrent;
+    totalCoinsEarned += minesCurrent;
+    const prize=minesCurrent;
+    minesGameActive=false;
+    minesStatus.innerText=`🏆 ${prize.toLocaleString()} سکه به حساب کیریت اضافه شد!`;
+    cashoutMinesBtn.disabled=true;
+    updateUI();
+    saveGame();
+    setTimeout(()=>{
+        minesStartPanel.style.display="block";
+        minesGamePanel.style.display="none";
+        minesBoard.innerHTML="";
+        minesBetInput.value="";
+    },900);
+}
+
+document.getElementById("startMinesBtn").onclick=startMinesGame;
+minesBetInput.addEventListener("keydown",e=>{if(e.key==="Enter") startMinesGame();});
+document.getElementById("cashoutMinesBtn").onclick=cashoutMines;
+
+/* ==================================================
+   سیستم کازینو
+================================================== */
+const casinoModal = document.getElementById("casinoModal");
+document.getElementById("openCasinoBtn").onclick = () => casinoModal.style.display = 'flex';
+document.getElementById("closeCasinoBtn").onclick = () => casinoModal.style.display = 'none';
+
+document.getElementById("spinCasinoBtn").onclick = () => {
+    let bet = parseInt(document.getElementById("betAmount").value);
+    if(!bet || bet < 1000) { showError("⚠️ حداقل مبلغ شرط ۱,۰۰۰ سکه ناقابل است!"); return; }
+    if(coins < bet) { showError("⚠️ مستر سکه کافی نداری!"); return; }
+
+    coins -= bet; updateUI();
+    let symbols = ["💀", "🍋", "🔔", "⭐", "💎", "7️⃣"];
+    let counter = 0;
+    let interval = setInterval(() => {
+        document.getElementById("casinoSlots").innerText = 
+            `${symbols[Math.floor(Math.random()*6)]} ${symbols[Math.floor(Math.random()*6)]} ${symbols[Math.floor(Math.random()*6)]}`;
+        counter++;
+        if(counter >= 12){
+            clearInterval(interval);
+            let win = Math.random() > 0.5 ? Math.floor(bet * 1.5) : 0;
+            coins += win;
+            document.getElementById("casinoResult").innerText = win > 0 ? `🎉 ${win} سکه بردی!` : "💥 پوچ شد!";
+            updateUI(); saveGame();
+        }
+    }, 80);
+};
+
+
+// ==================================================
+// ☁️ بازار آنلاین Cloudflare
+// ==================================================
+
+async function loadCloudMarket(){
+
+    try{
+
+        const response = await fetch(
+            CLOUD_API + "/api/market"
+        );
+
+        const result = await response.json();
+
+        if(!response.ok || !result.ok){
             throw new Error(
                 result.error ||
                 "دریافت بازار ناموفق بود."
             );
-
         }
 
+        // تبدیل آرایه بازار به object
+        // تا renderMarket فعلی بتواند از آن استفاده کند
         marketItemsCache = {};
 
-        (result.items || [])
-            .forEach(item => {
+        (result.items || []).forEach(item => {
 
-                marketItemsCache[item.id] = {
+            marketItemsCache[item.id] = {
+                sellerId: item.sellerId,
+                sellerName: item.sellerName,
 
-                    id:
-                        item.id,
+                name: item.name,
+                price: Number(item.price) || 0,
 
-                    sellerId:
-                        item.sellerId,
+                colorClass:
+                    item.colorClass || "lvl-1",
 
-                    sellerName:
-                        item.sellerName ||
-                        "بازیکن ناشناس",
+                typeName:
+                    item.typeName || "",
 
-                    sellerAccountId:
-                        item.sellerAccountId || "",
+                img:
+                    item.img || "",
 
-                    name:
-                        item.name ||
-                        "کارت",
+                originalInstanceId:
+                    item.originalInstanceId || "",
 
-                    price:
-                        Number(
-                            item.price
-                        ) || 0,
+                createdAt:
+                    Number(item.createdAt) || 0
+            };
 
-                    colorClass:
-                        item.colorClass ||
-                        "lvl-1",
-
-                    typeName:
-                        item.typeName ||
-                        "",
-
-                    img:
-                        item.img ||
-                        "",
-
-                    originalInstanceId:
-                        item.originalInstanceId ||
-                        "",
-
-                    createdAt:
-                        Number(
-                            item.createdAt
-                        ) || 0
-
-                };
-
-            });
+        });
 
         renderMarket();
 
         updateMarketStatus();
 
-    } catch (error) {
+    }catch(error){
 
-        console.error(
-            "MARKET LOAD ERROR:",
-            error
-        );
+        console.error(error);
 
         const status =
-            document.getElementById(
-                "marketStatus"
-            );
+            document.getElementById("marketStatus");
 
-        if (status) {
+        if(status){
 
             status.innerText =
-                "❌ اتصال به بازار برقرار نشد.";
+                "❌ اتصال به بازار با موفقیت برقرار نشد.";
 
-            status.style.color =
-                "#ff5252";
-
+            status.style.color = "#ff5252";
         }
-
     }
-
 }
 
 
@@ -1529,7 +1810,6 @@ function marketCardHTML(item, id, isMine){
                 <div style="font-size:11px;color:#aaa;">نوع: ${item.typeName || "-"}</div>
                 <div class="marketPrice">🏷️ قیمت فروش: ${Number(item.price).toLocaleString()} سکه</div>
                 <div class="seller">👤 فروشنده: ${item.sellerName || "ناشناس"}</div>
-                ${item.sellerAccountId ? `<div class="seller">🏦 حساب: ${item.sellerAccountId}</div>` : ""}
                 <button class="actionBtn marketMine" onclick="cancelMarketListing('${id}')">❌ برداشتن کارت از بازار</button>
             </div>`;
     }
@@ -1540,7 +1820,6 @@ function marketCardHTML(item, id, isMine){
             <div style="font-size:11px;color:#aaa;">نوع: ${item.typeName || "-"}</div>
             <div class="marketPrice">💰 قیمت: ${Number(item.price).toLocaleString()} سکه</div>
             <div class="seller">👤 فروشنده: ${item.sellerName || "بازیکن ناشناس"}</div>
-            ${item.sellerAccountId ? `<div class="seller">🏦 حساب: ${item.sellerAccountId}</div>` : ""}
             <button class="actionBtn marketBtn" onclick="buyMarketCard('${id}')">🛒 خرید کارت</button>
         </div>`;
 }
@@ -1648,43 +1927,35 @@ window.cancelMarketListing = async function(id){
     }
 };
 
-window.buyMarketCard = async function(id) {
+window.buyMarketCard = async function(id){
 
     const item = marketItemsCache[id];
 
-    if (!item) {
-        showError("⚠️ این کارت دیگر در بازار نیست.");
+    if(!item){
+        showError("⚠️ این کارت دیگر در بازار موجود نیست.");
         await loadCloudMarket();
         return;
     }
 
-    if (item.sellerId === cloudPlayerId) {
-        showError("⚠️ نمی‌توانی کارت خودت را بخری.");
+    if(item.sellerId === cloudPlayerId){
+        showError("⚠️ داداش میخوای کارت خودتو بخری؟!");
         return;
     }
 
     const price = Math.floor(Number(item.price) || 0);
 
-    if (price <= 0) {
-        showError("❌ قیمت کارت نامعتبر است.");
+    if(price <= 0){
+        showError("❌ قیمت کارت مشکل داره داداش!");
         return;
     }
 
-    if (Number(coins) < price) {
+    if(coins < price){
         showError("⚠️ سکه کافی نداری.");
         return;
     }
 
-    const confirmed = confirm(
-        "🛒 خرید کارت\n\n" +
-        "کارت: " + (item.name || "کارت") +
-        "\n\nقیمت: " + price.toLocaleString() +
-        " سکه\n\nخرید انجام شود؟"
-    );
+    try{
 
-    if (!confirmed) return;
-
-    try {
         const response = await fetch(
             CLOUD_API + "/api/market/buy",
             {
@@ -1701,11 +1972,17 @@ window.buyMarketCard = async function(id) {
 
         const result = await response.json();
 
-        if (!response.ok || !result.ok) {
-            if (result.code === "PURCHASE_CONFLICT") {
-                showError("⚠️ این کارت همین الان توسط بازیکن دیگری خریداری شد.");
-            } else {
-                showError(result.error || "❌ خرید کارت انجام نشد.");
+        // خرید ناموفق
+        if(!response.ok || !result.ok){
+
+            if(result.code === "PURCHASE_CONFLICT"){
+                showError(
+                    "⚠️ این کارت دقیقا همین لحظه توسط بازیکن دیگری خریداری شد!"
+                );
+            }else{
+                showError(
+                    result.error || "❌ خرید کارت انجام نشد."
+                );
             }
 
             await loadCloudMarket();
@@ -1713,44 +1990,43 @@ window.buyMarketCard = async function(id) {
         }
 
         /*
-         * Worker خرید را کامل روی Cloudflare انجام داده:
-         * سکه خریدار کم شده، کارت اضافه شده و پول فروشنده واریز شده.
-         * بنابراین Client دیگر خودش coins/myNFTs را تغییر نمی‌دهد.
+         * خرید با موفقیت روی Cloudflare انجام شده.
+         * نسخه جدید Save خریدار را نگه می‌داریم.
          */
-        if (result.buyerVersion !== undefined) {
-            window.cloudSaveVersion = Number(result.buyerVersion) || 0;
-            localStorage.setItem(
-                "clicker701_save_version",
-                window.cloudSaveVersion
-            );
+        if(result.buyerVersion !== undefined){
+            window.cloudSaveVersion =
+                Number(result.buyerVersion) || 0;
         }
 
+        /*
+         * بعد از خرید، Save واقعی را از Cloudflare می‌گیریم.
+         * بنابراین سکه و کلکسیون از اطلاعات سرور می‌آیند.
+         */
         const loaded = await cloudLoadGame();
 
-        if (!loaded) {
-            showError("⚠️ خرید انجام شد، اما دریافت اطلاعات جدید ناموفق بود.");
+        if(!loaded){
+            showError(
+                "⚠️ خرید انجام شد، اما دریافت اطلاعات جدید ناموفق بود."
+            );
             await loadCloudMarket();
             return;
         }
 
         updateUI();
-        updateStats();
         renderCollection();
-        saveGame();
 
         await loadCloudMarket();
+
+        showError("✅ کارت با موفقیت خریداری شد.");
+
+    }catch(error){
+
+        console.error(error);
 
         showError(
-            "✅ کارت با موفقیت خریداری شد.\n" +
-            "💰 مبلغ: " +
-            Number(result.price || price).toLocaleString() +
-            " سکه"
+            "❌ ارتباط با سرورامون برقرار نشد."
         );
 
-    } catch (error) {
-        console.error("BUY ERROR:", error);
-        showError("❌ ارتباط با بازار هنگام خرید قطع شد. بازار را تازه کن.");
-        await loadCloudMarket();
     }
 };
 
@@ -1960,7 +2236,6 @@ if (!localStorage.getItem(FIRST_GAME_KEY)) {
     ).value = playerName || "";
 
 })();
-refreshAccountId().catch(error => { console.error("ACCOUNT ERROR:", error); renderAccountId(); });
 </script>
 </body>
 </html>
