@@ -491,7 +491,7 @@ button.actionBtn:disabled{ background:#555; box-shadow:none; cursor:not-allowed;
 کد این هفته
     </div>
     <div class="panel2">
-        اندازه الت تناسلی جونا فالکون چند سانتی متر است؟
+        برای نعل کردن بروکلین سوپریم چند سانتی متر اهن نیاز بود؟
     </div>
 
     <div style="display:flex;gap:8px;">
@@ -771,11 +771,14 @@ const heroes = [
     { id: 7, name: "فرشته ای از بنگلادش", power: 0, price: 350000 },
     { id: 8, name: "حجت الاسلام سوییتی ابن کیریستیانو اوس غلام", power: 1126, price: 420000 },
     { id: 9, name: "بَنّای کاخ شاه سرزمین نیگریان", power: 0, price: 500000 },
-    { id: 10, name: "ارتشبد سردار دوشنبه عابدی زاده کابلی", power: 0, price: 559000 },
+    { id: 10, name: "ارتشبد سردار عابدی دوشنبه زاده کابلی", power: 0, price: 559000 },
     { id: 11, name: "قطورعلی زحمت کش", power: 0, price: 720000 },
     { id: 12, name: "نیگایی از انگلستان", power: 0, price: 926000 },
     { id: 13, name: "نانای کننده ماهر", power: 0, price: 1285000 },
-    { id: 14, name: "یک مرد خاورمیانه ای(حتی مقاوم در برابر اتم)", power: 0, price: 1469000 }
+    { id: 14, name: "یک مرد خاورمیانه ای(حتی مقاوم در برابر اتم)", power: 0, price: 1469000 },
+    { id: 15, name: "سیاه پوست نادان", power: 0, price: 1826000 },
+    { id: 16, name: "یکی از مریدان صفار", power: 0, price: 2385000 },
+    { id: 17, name: "نیگاعلی شلوار پلنگی", power: 0, price: 3169000 }
 ];
 
 /* ====== کارت ها ======== */
@@ -858,19 +861,19 @@ const monsters = [
         lootTable: [ { rarity: "blue", chance: 50 }, { rarity: "purple", chance: 35 }, { rarity: "yellow", chance: 15 } ] 
     },
     { 
-        lvl: 6, name: "خیاطی فدادون بشم", tickets: 9, reqHeroes: 10, colorClass: "lvl-6", colorName: "سبز مایل به قرمز آسمانی", coinsReward: 500,
+        lvl: 6, name: "خیاطی فدادون بشم", tickets: 9, reqHeroes: 11, colorClass: "lvl-6", colorName: "سبز مایل به قرمز آسمانی", coinsReward: 500,
         lootTable: [ { rarity: "purple", chance: 50 }, { rarity: "yellow", chance: 35 }, { rarity: "red", chance: 15 } ] 
     },
     { 
-        lvl: 7, name: "آسمان 26 اُم", tickets: 13, reqHeroes: 11, colorClass: "lvl-7", colorName: "پراید ایران خودرویی نوک مدادی تمام رنگ", coinsReward: 1000,
+        lvl: 7, name: "آسمان 26 اُم", tickets: 13, reqHeroes: 13, colorClass: "lvl-7", colorName: "پراید ایران خودرویی نوک مدادی تمام رنگ", coinsReward: 1000,
         lootTable: [ { rarity: "purple", chance: 40 }, { rarity: "red", chance: 45 }, { rarity: "neon", chance: 15 } ] 
     },
     { 
-        lvl: 8, name: "بهشتی در جهنم دره", tickets: 15, reqHeroes: 12, colorClass: "lvl-8", colorName: "به رنگ شیشه", coinsReward: 1100,
+        lvl: 8, name: "بهشتی در جهنم دره", tickets: 15, reqHeroes: 15, colorClass: "lvl-8", colorName: "به رنگ شیشه", coinsReward: 1100,
         lootTable: [ { rarity: "red", chance: 25 }, { rarity: "neon", chance: 45 }, { rarity: "neon2", chance: 20 } ] 
     },
     { 
-        lvl: 9, name: "بانک مرکزی نیگراباد", tickets: 18, reqHeroes: 13, colorClass: "lvl-9", colorName: "به رنگ رنگین کمان", coinsReward: 1200,
+        lvl: 9, name: "بانک مرکزی نیگراباد", tickets: 18, reqHeroes: 17, colorClass: "lvl-9", colorName: "به رنگ رنگین کمان", coinsReward: 1200,
         lootTable: [ { rarity: "neon", chance: 45 }, { rarity: "neon2", chance: 40 }, { rarity: "neonplus", chance: 15 } ] 
     }
 ];
@@ -1801,7 +1804,7 @@ window.sellNFT = async function(instanceId){
 
     const suggested = Math.floor(Number(nft.price) || 0);
     const entered = window.prompt(
-        `💰 قیمت فروش کارت «${nft.name}» را وارد کن:\n\nقیمت پیشنهادی فعلی: ${suggested.toLocaleString()} سکه`,
+        `💰 قیمت دلالی کارت «${nft.name}» را وارد کن:\n\nقیمت پیشنهادی فعلی: ${suggested.toLocaleString()} سکه`,
         suggested > 0 ? String(suggested) : ""
     );
 
@@ -2110,8 +2113,8 @@ alert("🖕")
 // کدهای جایزه
 const rewardCodes = {
 
-    "35": {
-    coins: 226000,
+    "76": {
+    coins: 230000,
     },
     "I.AM.VENOM": {
         coins: 500000,
