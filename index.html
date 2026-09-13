@@ -1743,12 +1743,13 @@ window.sellNFT = async function(instanceId){
         const response = await fetch(CLOUD_API + "/api/market/sell", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                playerId: cloudPlayerId,
-                instanceId,
-                price,
-                sellerName: playerName
-            })
+        body: JSON.stringify({
+            playerId: cloudPlayerId,
+            instanceId,
+            price,
+            sellerName: playerName,
+            save: saveGame()
+        })
         });
 
         const result = await response.json();
@@ -1765,11 +1766,6 @@ window.sellNFT = async function(instanceId){
         }
 
         // Worker کارت را از کلکسیون حذف کرده است.
-        const loaded = await cloudLoadGame();
-        if(loaded){
-            applyCloudSaveToGame(loaded);
-        }
-
         updateUI();
         renderCollection();
         await loadCloudMarket();
