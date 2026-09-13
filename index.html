@@ -1765,11 +1765,24 @@ window.sellNFT = async function(instanceId){
             localStorage.setItem("clicker701_save_version", window.cloudSaveVersion);
         }
 
-        // Worker کارت را از کلکسیون حذف کرده است.
-        updateUI();
-        renderCollection();
-        await loadCloudMarket();
-        showError(`✅ کارت با قیمت ${price.toLocaleString()} سکه در بازار قرار گرفت.`);
+// حذف کارت فروخته‌شده از کلکسیون محلی
+myNFTs = myNFTs.filter(
+    x => String(x.instanceId) !== String(instanceId)
+);
+
+// ذخیره کلکسیون جدید در LocalStorage
+saveGame();
+
+// بروزرسانی رابط کاربری
+updateUI();
+renderCollection();
+
+// بروزرسانی بازار
+await loadCloudMarket();
+
+showError(
+    `✅ کارت «${nft.name}» با قیمت ${price.toLocaleString()} سکه در بازار قرار گرفت.`
+);
 
     }catch(error){
         console.error(error);
