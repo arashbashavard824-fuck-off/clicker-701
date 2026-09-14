@@ -1950,7 +1950,11 @@ window.claimMarketCoins = async function(id){
         const response = await fetch(CLOUD_API + "/api/market/claim", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ playerId: cloudPlayerId, listingId: id })
+body: JSON.stringify({
+    playerId: cloudPlayerId,
+    listingId: id,
+    save: saveGame()
+})
         });
 
         const result = await response.json();
@@ -1966,13 +1970,19 @@ window.claimMarketCoins = async function(id){
             localStorage.setItem("clicker701_save_version", window.cloudSaveVersion);
         }
 
-        const loaded = await cloudLoadGame();
-        if(loaded) applyCloudSaveToGame(loaded);
+if(result.save){
+    applyCloudSaveToGame(result.save);
+}
 
-        updateUI();
-        updateStats();
-        await loadCloudMarket();
-        showError(`✅ ${amount.toLocaleString()} سکه به حسابت اضافه شد.`);
+// ذخیره موجودی جدید به صورت محلی
+saveGame();
+
+updateUI();
+updateStats();
+
+await loadCloudMarket();
+
+showError(`✅ ${amount.toLocaleString()} سکه از این معامله گرفتی بِرادِر`);
 
     }catch(error){
         console.error(error);
